@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM Assistantes — TEAMGREEKGODS</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C96A;
+    --black: #0A0A0A;
+    --dark: #111111;
+    --card: #1A1A1A;
+    --border: #2A2A2A;
+    --text: #E8E8E8;
+    --muted: #777;
+    --red: #E63946;
+    --green: #2DC653;
+    --blue: #4A90E2;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Outfit', sans-serif; background: var(--black); color: var(--text); min-height: 100vh; }
+  .header { background: var(--dark); border-bottom: 2px solid var(--gold); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px; color: var(--gold); }
+  .logo span { color: var(--text); }
+  .progress-bar-wrap { flex: 1; max-width: 380px; margin: 0 32px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .progress-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 99px; transition: width 0.4s ease; }
+  .score-badge { background: var(--border); border: 1px solid var(--gold); border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--gold); display: none; white-space: nowrap; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .intro { max-width: 680px; margin: 70px auto; padding: 0 24px; text-align: center; }
+  .intro-badge { display: inline-block; background: rgba(201,168,76,0.15); border: 1px solid var(--gold); color: var(--gold); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; padding: 6px 16px; border-radius: 99px; margin-bottom: 26px; }
+  .intro h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 7vw, 68px); line-height: 1; letter-spacing: 2px; margin-bottom: 18px; }
+  .intro h1 em { color: var(--gold); font-style: normal; }
+  .intro p { color: var(--muted); line-height: 1.7; font-size: 14px; margin-bottom: 36px; }
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 36px; }
+  .info-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: center; }
+  .info-card .num { font-family: 'Bebas Neue', sans-serif; font-size: 34px; color: var(--gold); }
+  .info-card .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .name-input { width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; font-size: 15px; color: var(--text); font-family: 'Outfit', sans-serif; margin-bottom: 18px; outline: none; transition: border-color 0.2s; }
+  .name-input:focus { border-color: var(--gold); }
+  .name-input::placeholder { color: var(--muted); }
+  .btn-start { display: inline-block; background: var(--gold); color: var(--black); font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; padding: 15px 48px; border-radius: 10px; border: none; cursor: pointer; transition: transform 0.15s, background 0.15s; }
+  .btn-start:hover { background: var(--gold-light); transform: translateY(-2px); }
+  .quiz-wrap { max-width: 780px; margin: 0 auto; padding: 36px 22px; }
+  .question-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .q-number { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px; color: var(--muted); }
+  .q-bloc { background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); color: var(--gold); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; }
+  .question-text { font-size: clamp(15px, 2.5vw, 19px); font-weight: 600; line-height: 1.5; margin-bottom: 24px; color: var(--text); }
+  .options { display: flex; flex-direction: column; gap: 11px; margin-bottom: 24px; }
+  .option { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 15px 18px; cursor: pointer; transition: all 0.2s; display: flex; align-items: flex-start; gap: 13px; font-size: 14px; line-height: 1.5; }
+  .option:hover:not(.disabled) { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+  .option.correct { border-color: var(--green); background: rgba(45,198,83,0.08); color: #b0f5c0; }
+  .option.wrong { border-color: var(--red); background: rgba(230,57,70,0.08); color: #f5b0b5; }
+  .option.disabled { cursor: default; }
+  .opt-letter { min-width: 26px; height: 26px; background: var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: var(--muted); flex-shrink: 0; margin-top: 1px; }
+  .option.correct .opt-letter { background: var(--green); color: var(--black); }
+  .option.wrong .opt-letter { background: var(--red); color: white; }
+  .explanation { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; font-size: 13px; line-height: 1.7; color: #CCC; margin-bottom: 22px; display: none; }
+  .explanation.show { display: block; }
+  .explanation strong { color: var(--gold); display: block; margin-bottom: 8px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  .btn-next { background: var(--gold); color: var(--black); font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 2px; padding: 13px 38px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.15s; display: none; }
+  .btn-next.show { display: inline-block; }
+  .btn-next:hover { background: var(--gold-light); transform: translateY(-2px); }
+  .results-wrap { max-width: 680px; margin: 60px auto; padding: 0 24px; text-align: center; }
+  .result-emoji { font-size: 56px; margin-bottom: 18px; }
+  .result-name { font-family: 'Bebas Neue', sans-serif; font-size: 44px; letter-spacing: 2px; color: var(--gold); margin-bottom: 8px; }
+  .result-score { font-family: 'Bebas Neue', sans-serif; font-size: 76px; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .result-total { color: var(--muted); font-size: 15px; margin-bottom: 28px; }
+  .result-grade { display: inline-block; padding: 10px 26px; border-radius: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; margin-bottom: 36px; }
+  .grade-a { background: rgba(45,198,83,0.15); color: var(--green); border: 1px solid var(--green); }
+  .grade-b { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid var(--gold); }
+  .grade-c { background: rgba(74,144,226,0.15); color: var(--blue); border: 1px solid var(--blue); }
+  .grade-d { background: rgba(230,57,70,0.15); color: var(--red); border: 1px solid var(--red); }
+  .bloc-breakdown { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; margin-bottom: 36px; text-align: left; }
+  .bloc-stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; }
+  .bloc-stat .bloc-name { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .bloc-stat .bloc-score { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--gold); }
+  .btn-restart { background: transparent; border: 1.5px solid var(--gold); color: var(--gold); font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 2px; padding: 13px 38px; border-radius: 10px; cursor: pointer; transition: all 0.15s; }
+  .btn-restart:hover { background: var(--gold); color: var(--black); }
+  .timer-badge { background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--gold); white-space: nowrap; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+  .result-timer { font-size: 15px; color: var(--muted); margin-bottom: 24px; }
+  .result-timer strong { color: var(--gold); }
+  .bloc-stat.ok { border-color: rgba(45,198,83,0.5); background: rgba(45,198,83,0.05); }
+  .bloc-stat.ok .bloc-score { color: var(--green); }
+  .bloc-stat.mid { border-color: rgba(201,168,76,0.5); background: rgba(201,168,76,0.05); }
+  .bloc-stat.mid .bloc-score { color: var(--gold); }
+  .bloc-stat.bad { border-color: rgba(230,57,70,0.5); background: rgba(230,57,70,0.05); }
+  .bloc-stat.bad .bloc-score { color: var(--red); }
+  .bloc-stat .bloc-pct { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .missed-section { margin-bottom: 36px; text-align: left; }
+  .missed-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: var(--red); margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  .missed-item { background: var(--card); border: 1px solid rgba(230,57,70,0.3); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  .missed-q { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; line-height: 1.5; }
+  .missed-ans { font-size: 12px; color: #aaa; margin-bottom: 4px; }
+  .missed-ans span { color: var(--green); font-weight: 600; }
+  .missed-bloc-tag { display: inline-block; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); color: var(--gold); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
+  @media (max-width: 600px) { .header { padding: 14px 18px; } .progress-bar-wrap { display: none; } .bloc-breakdown { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<div id="screen-intro" class="screen active">
+  <header class="header"><div class="logo">TEAM<span>GREEK</span>GODS</div></header>
+  <div class="intro">
+    <div class="intro-badge">Formation Assistantes</div>
+    <h1>TEST DE<br><em>COMPÉTENCES</em></h1>
+    <p>Quiz technique basé sur le guide TGG. Catégorisation, diet, process, communication, situations complexes, rétention. Réponds sans consulter le guide.</p>
+    <div class="info-grid">
+      <div class="info-card"><div class="num">100</div><div class="label">Questions</div></div>
+      <div class="info-card"><div class="num">11</div><div class="label">Blocs</div></div>
+      <div class="info-card"><div class="num">QCM</div><div class="label">Format</div></div>
+    </div>
+    <input class="name-input" id="user-name" type="text" placeholder="Ton prénom..." maxlength="30"><br>
+    <button class="btn-start" onclick="startQuiz()">COMMENCER LE TEST</button>
+  </div>
+</div>
+
+<div id="screen-quiz" class="screen">
+  <header class="header">
+    <div class="logo">TGG</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-label"><span id="prog-label">Question 1 / 50</span><span id="prog-pct">0%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+    <div class="score-badge" id="score-badge">0 / 0</div>
+    <div class="timer-badge" id="timer-badge">00:00</div>
+  </header>
+  <div class="quiz-wrap">
+    <div class="question-meta">
+      <span class="q-number" id="q-number">Q1 / 50</span>
+      <span class="q-bloc" id="q-bloc">CATÉGORISATION</span>
+    </div>
+    <div class="question-text" id="q-text"></div>
+    <div class="options" id="q-options"></div>
+    <div class="explanation" id="q-explanation"></div>
+    <button class="btn-next" id="btn-next" onclick="nextQuestion()">QUESTION SUIVANTE →</button>
+  </div>
+</div>
+
+<div id="screen-results" class="screen">
+  <header class="header"><div class="logo">TEAM<span>GREEK</span>GODS</div></header>
+  <div class="results-wrap">
+    <div class="result-emoji" id="res-emoji">🏆</div>
+    <div class="result-name" id="res-name"></div>
+    <div class="result-score" id="res-score"></div>
+    <div class="result-total" id="res-total"></div>
+    <div class="result-grade" id="res-grade"></div>
+    <div class="result-timer" id="res-timer"></div>
+    <div class="bloc-breakdown" id="bloc-breakdown"></div>
+    <div class="missed-section" id="missed-section"></div>
+    <button class="btn-restart" onclick="restartQuiz()">↩ REFAIRE LE TEST</button>
+  </div>
+</div>
+
+<script>
+const Q = [
+  // BLOC 1 — CATÉGORISATION (12 questions)
+  {b:"Catégorisation",q:"Un client envoie une photo de profil avec le ventre qui ressort. Comment distingues-tu s'il s'agit de gras ou d'une mauvaise posture ?",o:["On analyse ses mensurations : si tour de taille > 90cm = gras, sinon = posture","On se base sur son poids actuel : si BMI > 25 = gras, si BMI normal = posture","On regarde la photo de face : si le ventre est symétrique et l'abdomen plat = posture. Si gras visible sous les côtes = gras réel","On analyse la photo de profil : si le bas du dos montre du gras et le ventre de face ressort aussi = gras réel. Si les muscles sont définis mais le ventre ressort = posture"],c:3,e:"Sur la photo de profil, une mauvaise posture (bassin en avant, épaules tombantes) peut simuler un ventre. Le bas du dos et la photo de face permettent de confirmer la présence réelle de gras."},
+  {b:"Catégorisation",q:"Quelle zone du corps est le PREMIER indicateur pour confirmer qu'un client JAUNE a encore du gras à perdre ?",o:["Le bas du dos, car c'est la dernière zone à perdre du gras et la première à confirmer qu'il en reste","Les cuisses et hanches, car ce sont les zones de stockage prioritaires chez la majorité des clients","Les bras et épaules, car ce sont les zones qui changent le plus rapidement avec le régime","L'abdomen de face, car c'est là que le gras se voit en premier et que la définition musculaire apparaît"],c:0,e:"Le bas du dos est le premier repère : si du gras est encore visible ici, il reste des réserves à éliminer même si l'abdomen commence à se définir."},
+  {b:"Catégorisation",q:"Quelles sont les 4 conditions OBLIGATOIRES pour faire passer un client de JAUNE à ORANGE ?",o:["Satisfaction de la sèche + ceinture abdominale visible face/profil/dos + énergie stable + forte sensation de faim déclarée plusieurs fois","Perte de 5kg minimum + abdos visibles de face + sommeil stable + minimum 2 mois de sèche complétés","Poids stable 3 semaines + faim déclarée plusieurs fois + ceinture abdominale visible face uniquement + accord du client","Poids stable 2 semaines + énergie bonne + cardio 5x/semaine respecté + accord du coach après photos"],c:0,e:"Les 4 critères exacts : (1) satisfaction de la sèche, (2) ceinture abdominale visible de face/profil/dos, (3) énergie stable, (4) forte sensation de faim déclarée plusieurs fois."},
+  {b:"Catégorisation",q:"De combien augmente-t-on les calories lors d'un passage JAUNE → ORANGE et à quelle fréquence ?",o:["100-150 kcal par semaine progressivement, en maintenant le cardio 4x/semaine pendant la transition","300-500 kcal en une seule fois pour relancer le métabolisme rapidement après la sèche","50-100 kcal tous les 15 jours pour éviter la reprise de gras après la sèche","200-300 kcal par semaine progressivement pour compenser le déficit accumulé pendant la sèche"],c:0,e:"Augmentation PROGRESSIVE uniquement : 100-150 kcal/semaine. Jamais d'augmentation soudaine. Le cardio 4x/semaine est maintenu pendant cette transition."},
+  {b:"Catégorisation",q:"Un client mince sans gras visible mais avec peu de muscle débute le programme. Quelle couleur lui attribues-tu ?",o:["ROUGE, car il est mince sans gras et a besoin d'une prise de masse avec surplus calorique","ROSE, car son profil correspond à quelqu'un qui veut maintenir son poids tout en se musclant","ORANGE, car il est déjà proche d'une composition corporelle équilibrée sans excès de gras","JAUNE, car il n'a pas encore de masse musculaire développée et doit d'abord perdre les dernières réserves"],c:0,e:"Un client mince sans gras = ROUGE. Il a besoin d'un surplus calorique pour construire de la masse musculaire. Ce n'est pas le profil d'une sèche."},
+  {b:"Catégorisation",q:"Quels ajustements alimentaires exactement font passer un client de JAUNE à ORANGE ?",o:["On retire -30g riz, -20g noix, -50g pain et 1 œuf par rapport au régime JAUNE de base","On ajoute +30g riz, +20g noix, +50g pain et 1 œuf par rapport au régime JAUNE de base","On ajoute +50g riz, +30g noix, +100g pain et 2 œufs par rapport au régime JAUNE de base","On double les glucides du régime JAUNE et on maintient les protéines et lipides identiques"],c:1,e:"Passage JAUNE → ORANGE : +30g riz, +20g noix, +50g pain, +1 œuf. À ne pas confondre avec ROUGE → ORANGE qui est l'inverse (-30g riz, -20g noix, -50g pain, -1 œuf)."},
+  {b:"Catégorisation",q:"Pour confirmer qu'une sèche est terminée, dans quelles conditions exactes demandes-tu des photos au client ?",o:["Le matin à jeun, en bonne lumière (pas de contre-jour), dans les mêmes positions que les photos précédentes","Le soir après un repas équilibré pour voir le ventre dans son état le plus représentatif","N'importe quand dans la journée, sous n'importe quelle lumière pour avoir une photo naturelle","Après l'entraînement pour bénéficier de la vascularisation qui définit mieux les muscles"],c:0,e:"Photos de suivi : matin à jeun, bonne lumière (pas de contre-jour), mêmes positions que les photos précédentes. Ces conditions sont obligatoires pour une comparaison fiable."},
+  {b:"Catégorisation",q:"Quel est le PREMIER indicateur de progrès à regarder chez un client, avant même le poids ?",o:["Le poids sur la balance car c'est la mesure la plus objective et universellement reconnue","Les mensurations (tour de taille, hanches) car elles reflètent mieux la perte de gras localisée","Les photos avant/après car elles montrent la transformation réelle du corps indépendamment du poids","Les performances en salle car l'amélioration de la force indique une meilleure composition corporelle"],c:2,e:"Le changement physique via les photos est le premier indicateur. Le poids vient en second. Un client peut perdre du gras et prendre du muscle sans changer de poids — les photos ne mentent pas."},
+  {b:"Catégorisation",q:"Lors d'une transition ROUGE → ORANGE (fin de prise de masse), qu'est-ce qui change dans le régime ?",o:["On divise toutes les calories par 2 pour créer un déficit calorique fort et rapide","On garde exactement le même régime mais on ajoute du cardio pour créer le déficit","On ajoute +30g riz, +20g noix, +50g pain, +1 œuf pour maintenir l'énergie pendant la sèche","On retire -30g riz, -20g noix, -50g pain, -1 œuf pour initier la sèche après la prise de masse"],c:3,e:"Transition ROUGE → ORANGE : on retire (-30g riz, -20g noix, -50g pain, -1 œuf). C'est l'inverse du passage JAUNE → ORANGE. Le ROUGE était en surplus, l'ORANGE initie la sèche."},
+  {b:"Catégorisation",q:"Un client JAUNE prend du poids depuis 2 semaines au lieu d'en perdre. Quelles sont les 2 causes possibles selon le guide ?",o:["Pas assez de cardio dans la semaine + repas trop proches du coucher","Problème d'engagement du client (il ne suit pas vraiment) OU problème dans le système alimentaire (rare)","Excès de sel dans les repas + manque d'eau qui provoque une fausse prise de poids","Rétention d'eau due au stress + métabolisme qui s'est adapté au déficit calorique"],c:1,e:"Selon le guide : si un client JAUNE prend du poids, c'est soit son engagement (non-respect du régime), soit rarement un problème du système alimentaire. Investiguer avec photos repas et vidéos entraînement."},
+  {b:"Catégorisation",q:"Un client ROUGE en prise de masse envoie des photos après 8 semaines. Il a pris du muscle mais aussi un peu de gras au ventre. Quelle est ton analyse ?",o:["On lui signale que son programme ne fonctionne pas et on contacte le coach","On lui coupe 500 kcal immédiatement pour stopper la prise de gras tout en maintenant la masse","C'est normal en prise de masse — un peu de gras est attendu. On continue si l'objectif musculaire n'est pas encore atteint. Passage ORANGE quand le client est satisfait du volume","On le passe immédiatement en ORANGE car la présence de gras indique que la prise de masse est terminée"],c:2,e:"Un peu de gras en prise de masse ROUGE = normal et attendu. On continue tant que l'objectif musculaire n'est pas atteint. La décision de passer en ORANGE se prend quand le client est satisfait côté muscle."},
+  {b:"Catégorisation",q:"Lors du passage ROSE MASSE → ROSE SÈCHE, quel est le signe principal qui déclenche cette transition ?",o:["Le client ressent une forte sensation de faim persistante qui indique un métabolisme élevé","Le client est satisfait de sa prise de masse et souhaite affiner — la transition se décide avec le coach","Le client a atteint son objectif de poids cible sur la balance après plusieurs semaines de masse","Le client stagne sur le poids depuis 3 semaines malgré un régime bien suivi"],c:1,e:"La transition ROSE MASSE → ROSE SÈCHE se décide quand le client est satisfait de sa prise de masse et veut affiner. C'est une décision concertée avec le coach, pas automatique."},
+
+  // BLOC 2 — DIET & CALORIES (12 questions)
+  {b:"Diet & Calories",q:"Quelle est la fourchette calorique approximative d'un régime ORANGE (prise de masse modérée) ?",o:["3000-3500 kcal/jour pour maximiser la prise de masse musculaire rapidement","1500-1800 kcal/jour, identique au JAUNE mais avec plus de protéines","2300-2800 kcal/jour selon le profil, avec un surplus modéré pour la prise de masse","1800-2200 kcal/jour, légèrement en dessus du métabolisme de base pour une prise lente"],c:2,e:"Le régime ORANGE se situe autour de 2300-2800 kcal selon le profil du client. C'est un surplus modéré qui permet une prise de masse sans excès de gras."},
+  {b:"Diet & Calories",q:"Que signifient les abréviations RRS et RRM dans le système TGG ?",o:["RRS = Régime Riche Sucres / RRM = Régime Riche Muscles","RRS = Régime Rouge Sèche / RRM = Régime Rouge Masse","RRS = Régime Repas Soir / RRM = Régime Repas Matin","RRS = Repas Riche en Sucres / RRM = Repas Riche en Macros"],c:1,e:"RRS = Régime Rouge Sèche / RRM = Régime Rouge Masse. Ces abréviations permettent d'identifier rapidement le type de régime d'un client ROUGE."},
+  {b:"Diet & Calories",q:"Un client JAUNE stagne depuis 3 semaines. Avant de modifier ses calories, quoi vérifier EN PREMIER ?",o:["Changer le régime vers une autre couleur pour relancer la progression","Réduire directement les calories de 200 kcal car la stagnation indique que le métabolisme s'est adapté","Augmenter le cardio à 5x/semaine pour créer un déficit supplémentaire sans toucher à l'alimentation","Vérifier le grammage exact des aliments, le sommeil, le stress, la consommation de sel et d'eau — avant toute modification"],c:3,e:"Avant de modifier les calories : vérifier grammage, sommeil, stress, sel, eau. La stagnation vient souvent d'un non-respect non conscient du régime, pas d'une adaptation métabolique."},
+  {b:"Diet & Calories",q:"Un client dit avoir faim 30 minutes après son repas malgré des quantités correctes. Quelle explication lui donnes-tu ?",o:["Manger trop vite perturbe les hormones de satiété — le signal de satiété met 20 minutes à arriver au cerveau","C'est normal pendant une sèche, la faim est inévitable et il faut s'y habituer","Il fait trop de cardio qui augmente l'appétit — réduire le cardio pour moins avoir faim","Il ne mange pas assez, il faut augmenter ses quantités de 20% immédiatement pour calmer la faim"],c:0,e:"Manger trop vite perturbe les hormones de faim/satiété (ghréline/leptine). Le cerveau reçoit le signal de satiété 20 minutes après le début du repas. Manger lentement résout souvent ce problème."},
+  {b:"Diet & Calories",q:"Quel est le timing idéal pour le repas post-entraînement selon le guide ?",o:["Dans les 2 heures maximum après l'entraînement, avec le grand repas de la journée","Le soir uniquement, peu importe l'heure de l'entraînement, pour optimiser la récupération nocturne","Immédiatement après la séance (dans les 30 minutes) avec une boisson protéinée rapide","Le repas post-entraînement peut être pris jusqu'à 4h après sans impact sur la récupération"],c:0,e:"Repas post-entraînement : dans les 2 heures maximum après la séance, et c'est le grand repas de la journée. Ce timing optimise la synthèse protéique et la récupération musculaire."},
+  {b:"Diet & Calories",q:"Dans quel ordre doit-on faire musculation et cardio lors d'une même séance ?",o:["Peu importe l'ordre, ce qui compte c'est d'effectuer les deux dans la même session","Les deux en même temps avec des supersets cardio-muscu pour maximiser la dépense calorique","Musculation TOUJOURS avant le cardio — l'objectif principal est la prise musculaire, il faut performer sans fatigue","Cardio d'abord pour se chauffer et préparer le système cardiovasculaire avant les efforts musculaires"],c:2,e:"Musculation TOUJOURS avant cardio. L'objectif prioritaire est la prise musculaire — il faut des réserves d'énergie et une fraîcheur neuromusculaire pour performer. Le cardio peut se faire après sans problème."},
+  {b:"Diet & Calories",q:"La couleur idéale des urines pour une bonne hydratation est :",o:["Transparente/incolore, ce qui indique une hydratation maximale et optimale pour le sport","Jaune pâle, ce qui indique une hydratation correcte — ni trop ni pas assez","Jaune foncé/ambre, ce qui est normal et indique une concentration en minéraux correcte","Orange, ce qui indique que le corps élimine bien les toxines grâce à une bonne hydratation"],c:1,e:"Jaune pâle = hydratation correcte. Foncé = déshydraté (boire plus). Transparent/incolore = sur-hydraté (risque de déséquilibre électrolytique). L'objectif est jaune pâle."},
+  {b:"Diet & Calories",q:"Quelle est la différence entre morphologie et métabolisme dans le contexte du coaching TGG ?",o:["Ce sont deux termes identiques qui désignent la façon dont le corps stocke les graisses","La morphologie désigne le régime alimentaire et le métabolisme désigne l'entraînement","Le métabolisme est génétique et ne peut jamais être influencé par le coaching","La morphologie = forme et structure du corps (où le client stocke le gras). Le métabolisme = vitesse à laquelle le corps brûle les calories au repos"],c:3,e:"Morphologie = forme du corps et répartition des graisses (ex: client qui stocke au ventre vs aux hanches). Métabolisme = capacité du corps à brûler des calories au repos. Les deux influencent le programme mais différemment : la morphologie guide la catégorisation, le métabolisme guide les calories assignées."},
+  {b:"Diet & Calories",q:"À quelle heure maximum faut-il prendre le dernier repas de la journée ?",o:["Pas de règle précise — l'heure du dernier repas n'impacte pas la composition corporelle","Le plus tard possible, idéalement juste avant de dormir pour éviter les fringales nocturnes","1 heure avant de dormir pour maximiser l'absorption des protéines nocturnes","3 heures avant de dormir pour optimiser la digestion et la qualité du sommeil"],c:3,e:"Dernier repas : 3 heures avant de dormir. Manger trop proche du coucher perturbe le sommeil, nuit à la récupération et peut favoriser le stockage."},
+  {b:"Diet & Calories",q:"Pourquoi les flocons d'avoine sont-ils préférés au granola dans la plupart des régimes TGG ?",o:["Le granola est trop sucré et plus calorique — il est réservé principalement aux ROUGES. Les flocons sont plus adaptés aux régimes en déficit","Les flocons d'avoine se digèrent plus vite donc sont meilleurs avant l'entraînement","Le granola est interdit car il contient du gluten","Les flocons d'avoine contiennent plus de protéines que le granola"],c:0,e:"Le granola est plus calorique et souvent sucré → réservé principalement aux ROUGES (prise de masse). Pour JAUNE/ORANGE en déficit, les flocons d'avoine sont plus adaptés car moins denses en calories. Si on autorise le granola : 100g granola = 120g flocons d'avoine, et le lait doit être ajouté dans le régime."},
+  {b:"Diet & Calories",q:"À quelle condition peut-on autoriser une boisson protéinée (type Chergui) dans le régime d'un client ?",o:["Jamais autorisée car les boissons protéinées sont des produits transformés incompatibles avec le programme","Seulement pour les clients ROUGE en prise de masse qui ont besoin de calories supplémentaires facilement","Toujours autorisée car les protéines sont bonnes et la boisson protéinée remplace efficacement n'importe quel repas","Uniquement si les calories sont entre 50-120 kcal/100g ET 8-20g+ de protéines/100g — seulement si le client ne peut pas atteindre son apport normalement"],c:3,e:"Condition : 50-120 kcal/100g ET 8-20g+ de protéines/100g. À utiliser uniquement quand le client ne peut pas atteindre son apport en protéines normalement (ex: 150g poulet = 450g Chergui)."},
+  {b:"Diet & Calories",q:"Le granola est réservé principalement à quelle catégorie de client et comment l'utiliser correctement ?",o:["Pour les JAUNES uniquement car ils ont besoin d'énergie supplémentaire le matin avant leur entraînement","Pour tous les clients car c'est un aliment sain. 100g remplace 100g de flocons d'avoine à quantités égales","Pour les ROUGES principalement. 100g granola = 120g flocons d'avoine. Doit toujours être consommé avec du lait (ajouter le lait au régime)","Pour les ROSES en sèche car le granola rassasie plus longtemps et aide à supporter le déficit calorique"],c:2,e:"Granola : principalement pour les ROUGES (plus calorique que les flocons). 100g granola = 120g flocons d'avoine. Toujours avec du lait — ajouter le lait dans le régime si autorisé."},
+
+  // BLOC 3 — PROCESS & ORGANISATION (10 questions)
+  {b:"Process & Organisation",q:"Quels sont les 3 créneaux de travail en temps normal (hors Ramadan) et les tâches prioritaires de chaque plage ?",o:["9h-12h (relances paiements+2j, updates, répondre, tour discussions) / 14h30-18h (2ème relances, répondre, envoyer régimes, relance photos-poids, tour discussions) / 20h-21h (tour discussions, vérifier régimes manquants)","10h-13h (tout faire en une fois), 16h-18h (paiements uniquement), 21h-22h (récap coach)","8h-10h (paiements et check-ins), 13h-15h (questions diverses), 19h-20h (envoi des régimes du lendemain)","7h-9h (tour discussions urgent), 12h-14h (toutes les relances), 18h-21h (régimes + récap coach)"],c:0,e:"Les 3 créneaux : 9h-12h (relance paiement+2j, updates, répondre, tour discussions), 14h30-18h (2ème relances, répondre, régimes, relance photos-poids, tour discussions), 20h-21h (tour discussions + vérifier régimes/programmes manquants)."},
+  {b:"Process & Organisation",q:"Comment gères-tu une semaine de WEEK OFF en tant qu'assistante REMPLAÇANTE ?",o:["On envoie un message à tous les clients pour les informer du changement d'assistante la semaine","On contacte uniquement les clients qui ont des problèmes urgents et on laisse les autres attendre le retour","On centralise les données sur le Sheet (tel, nom, couleur, régime, caractère, commentaires), on code en couleurs, pas de relance 2j détaillée, le coach gère les paiements","On fait exactement le même travail qu'en temps normal en gérant tous les paiements et toutes les relances"],c:2,e:"En WEEK OFF comme remplaçante : centraliser sur le Sheet (tel, nom, couleur, régime, caractère, commentaires), coder les noms en couleur (vert/rouge/orange), pas de relance 2j approfondie, le coach gère les paiements."},
+  {b:"Process & Organisation",q:"Que dois-tu faire AVANT de partir en day off en tant qu'assistante OFF ?",o:["Centraliser toutes les données clients sur le Sheet (6 derniers chiffres tel, nom, couleur, régime préférence+numéro, caractère/engagement, commentaires) pour que la remplaçante ait tout","Faire un récap oral avec la remplaçante et lui transmettre les 5-6 clients les plus importants à surveiller","Prévenir le coach par message vocal et laisser son téléphone accessible en cas d'urgence pendant le day off","Finir toutes les relances paiements en retard et envoyer tous les régimes prévus avant de partir"],c:0,e:"Avant de partir : TOUT centraliser sur le Sheet avec les 6 derniers chiffres du téléphone, nom, couleur, régime préférence + numéro, caractère/engagement du client, et commentaires pour la remplaçante."},
+  {b:"Process & Organisation",q:"Un client a son check-in prévu ce jour ET son paiement à relancer. Dans quel ordre gères-tu les deux ?",o:["On attend que le client envoie spontanément son update avant d'aborder quoi que ce soit","Les deux en même temps dans un seul message pour ne pas spammer le client avec plusieurs messages","Paiement d'abord car c'est la priorité financière, puis check-in ensuite dans le même message","Update (check-in) d'abord → paiement ensuite, même si l'abonnement expire bientôt"],c:3,e:"Règle absolue : UPDATE D'ABORD → PAIEMENT APRÈS. L'ordre ne s'inverse jamais, même si l'abonnement expire bientôt."},
+  {b:"Process & Organisation",q:"Combien de jours à l'avance doit-on relancer un paiement ? Et si le day off est le lendemain ?",o:["1 jour à l'avance en temps normal, 2 jours si le day off est le lendemain pour sécuriser","2 jours à l'avance en temps normal, 3 jours si le day off est le lendemain pour ne pas perdre un jour","3 jours à l'avance toujours, peu importe le day off, pour avoir de la marge en cas de retard","On attend que le client paie spontanément — on ne relance que si l'abonnement est déjà expiré"],c:1,e:"Relance paiement : 2 jours à l'avance en temps normal. 3 jours si le day off est le lendemain (pour ne pas perdre un jour de relance)."},
+  {b:"Process & Organisation",q:"Quels sont les 5 éléments obligatoires du récapitulatif journalier envoyé au coach ?",o:["Paiements reçus / Paiements en attente / Check-ins reçus / Clients non-répondants / Urgences du lendemain","Nombre de messages envoyés / Liste des clients actifs / Paiements reçus / Régimes envoyés / Check-ins traités","Résumé des discussions / Régimes envoyés / Clients stagnants / Questions sans réponse / Leads du jour","Problèmes résolus / Problèmes à résoudre / Nombre de nouveaux clients leads/Insta / Commentaire de la journée / Satisfaction et évolution client"],c:3,e:"Les 5 éléments du récap : Problèmes résolus / Problèmes à résoudre / Nouveaux clients leads/Insta / Commentaire du jour / Satisfaction et évolution client."},
+  {b:"Process & Organisation",q:"Un client hors Maroc veut s'abonner. Comment gères-tu son paiement ?",o:["On accepte le virement en dirham depuis l'étranger si le client confirme avoir un compte en dirhams","Prix en dollars ou livres sterling selon son pays de résidence actuel","Prix en euros uniquement, paiement via lien Stripe — pas de virement hors Maroc, pas d'agence (TapTap, WesternUnion, CashPlus)","On lui propose TapTap ou WesternUnion qui acceptent les paiements internationaux facilement"],c:2,e:"Clients hors Maroc : prix en euros, paiement via Stripe uniquement. Aucun virement depuis l'étranger. Aucune agence de transfert (TapTap, WesternUnion, CashPlus, etc.)."},
+  {b:"Process & Organisation",q:"Tu reçois un virement avec une date douteuse et un montant pas clairement affiché. Que fais-tu ?",o:["On valide quand même pour ne pas froisser le client et on le signale en récap pour régularisation","On laisse en récapitulatif pour vérification par le coach — on ne valide jamais un virement douteux seule","On demande au client de renvoyer un deuxième virement pour confirmer le premier","On annule directement l'abonnement du client et on lui explique que le paiement est invalide"],c:1,e:"Tout virement douteux (date, montant non affiché, police suspecte) → laisser en récapitulatif pour vérification par le coach. Ne jamais valider sans confirmation."},
+  {b:"Process & Organisation",q:"Avant de fermer ta journée, quelles sont les 2 vérifications OBLIGATOIRES selon le guide ?",o:["Tout le monde a reçu une réponse + tout le monde a son régime/programme","Toutes les updates reçues + tous les nouveaux clients ajoutés dans le système","Récap envoyé au coach + tous les paiements du jour comptabilisés dans le Sheet","Toutes les relances paiements faites + coach prévenu des urgences du lendemain"],c:0,e:"Deux obligations avant de fermer : (1) Tout le monde a reçu une réponse. (2) Tout le monde a son régime/programme. On ne ferme jamais sans avoir vérifié ces deux points."},
+  {b:"Communication Client",q:"Un client dit 'safi lyum khsert, ghadi nbda men jdid ghda' (j'ai tout raté aujourd'hui, je reprendrai demain). Comment réagis-tu ?",o:["'C'est vrai, demain tu repars à fond ! L'important c'est de repartir pas d'être parfait'","Faire un plan de rattrapage détaillé pour le lendemain pour qu'il se sente prêt à repartir","Expliquer que la mentalité 'demain' ralentit tout et s'installe dans tous les domaines — il faut reprendre MAINTENANT même partiellement","Ignorer le message et attendre son prochain check-in hebdomadaire pour en reparler"],c:2,e:"La mentalité 'je reprendrai demain' s'installe dans tous les domaines et ralentit la progression. Il faut expliquer calmement et encourager à reprendre immédiatement, même partiellement."},
+  {b:"Communication Client",q:"Un client explique un problème complexe par messages écrits mais tu ne comprends pas bien la situation. Que fais-tu ?",o:["Transférer directement au coach sans essayer de comprendre","Répondre quand même avec une solution générique pour ne pas paraître incompétente","Demander au client de reformuler par écrit plus clairement","Demander au client un audio détaillant son problème pour mieux comprendre — si le problème persiste ou dépasse tes compétences, le remonter au coach"],c:3,e:"La bonne approche : demander un audio au client pour saisir tous les détails sans échange d'écrits confus. Si après l'audio la situation reste complexe ou dépasse ton domaine → remonter au coach sans s'expliquer davantage avec le client."},
+  {b:"Communication Client",q:"Comment et quand propose-t-on une promotion long terme à un client ? (3 règles absolues)",o:["En fin de mois, après un check-in positif, uniquement si le client mentionne lui-même le budget ou la durée","2-7 jours après son paiement, intégré dans une conversation existante après interaction positive, jamais à un client déjà en tarif réduit","Au moment de la relance du 2ème mois, en message direct séparé avec l'offre détaillée et un lien de paiement","Dès le premier paiement reçu, par message direct avec les tarifs complets et les économies réalisées"],c:1,e:"(1) Timing : 2-7 jours après paiement du 2ème mois. (2) Jamais de message promo direct — intégrer dans conversation après interaction positive. (3) Ne JAMAIS proposer à un client déjà en tarif réduit."},
+  {b:"Communication Client",q:"Un client a un décès dans sa famille. Son abonnement expire dans 2 jours. Que fais-tu ?",o:["Signaler au coach pour que ce soit lui qui gère la relance paiement dans ce cas sensible","Attendre 1 semaine exactement puis relancer normalement comme si rien ne s'était passé","Lui envoyer les condoléances d'abord, puis relancer le paiement 24h plus tard avec tact","Ne JAMAIS relancer un client en deuil pour paiement ou check-in — laisser passer le moment difficile"],c:3,e:"Règle absolue : ne JAMAIS relancer pour paiement ou check-in une personne en deuil. Le respect humain prime toujours. On attend que la situation se calme naturellement."},
+  {b:"Communication Client",q:"Quels sont les 6 types d'objectifs à définir avec un client au démarrage du programme ?",o:["Sèche / Masse / Maintien / Cardio / Mobilité / Mental","Posture / Muscles / Gras / Force / Discipline / Poids (avec nuance : ne pas trop s'y baser)","Poids / Cardio / Nutrition / Hydratation / Sommeil / Gestion du stress","IMC / Tour de taille / Masse musculaire / Masse grasse / Performances / Bien-être général"],c:1,e:"Les 6 objectifs du guide : Posture (alignement), Muscles (volume/tonicité), Gras (réduction), Force (performance), Discipline (régularité), et Poids — avec la nuance importante de ne pas trop s'y baser."},
+  {b:"Communication Client",q:"Un client veut un appel téléphonique avec toi pour discuter de son programme. Que fais-tu ?",o:["Tu proposes une visio à la place sur WhatsApp pour que ce soit moins formel qu'un appel","Tu refuses poliment et tu expliques que tout se passe uniquement par messagerie pour des raisons d'organisation","Tu transmets la demande au coach — les appels se font avec le coach, pas avec les assistantes","Tu lui accordes l'appel si tu es disponible car ça renforce la relation client et la fidélité"],c:2,e:"Les demandes d'appel sont transmises au coach. Les assistantes ne gèrent pas les appels clients directement — c'est une situation qui nécessite l'intervention du coach."},
+  {b:"Communication Client",q:"Tu dois vérifier la vraie compréhension d'un client après lui avoir expliqué le système RIR. Comment procèdes-tu ?",o:["Tu attends qu'il applique dans sa prochaine séance et tu juges sur la vidéo qu'il t'envoie","Tu lui demandes directement 'tu as compris ?' car c'est la question la plus directe et la plus respectueuse","Tu lui envoies un quiz WhatsApp avec 3 questions pour tester ses connaissances sur le nouveau système","Tu le relances 2-3 jours après avec une question précise sur le contenu — 'c'est quoi ton RIR cible sur le développé ?' pour vérifier la vraie compréhension"],c:3,e:"Demander 'tu as compris ?' = toujours 'oui' par politesse. Relancer avec une question précise sur le contenu quelques jours après confirme la vraie compréhension et la bonne application."},
+  {b:"Diet & Calories",q:"Un client JAUNE stagne depuis 3 semaines malgré un respect apparent du régime. Que vérifies-tu en priorité côté alimentation ?",o:["Changer sa couleur de régime vers ROSE directement","Réduire immédiatement ses calories de 200 kcal sans investiguer","Lui ajouter une séance de cardio supplémentaire","Vérifier les autres aspects (training, sommeil, eau) puis analyser les détails du diet : utilisation d'huile en cuisson, excès de sel, aliments non pesés, sauces cachées — noter tout dans le récap au coach"],c:3,e:"Avant de modifier le régime, vérifier training + sommeil + eau. Côté diet : chercher les détails qui ne sont pas toujours déclarés (huile de cuisson, sel, sauces, grammage approximatif). Consigner ces infos dans le récap quotidien au coach pour qu'il décide de l'ajustement."},
+  {b:"Situations Complexes",q:"Un client se plaint de douleurs au tibia et aux genoux lors de la marche (cardio). Quelles peuvent être les causes et que proposes-tu ?",o:["Causes : mauvaises chaussures, surcharge trop rapide, mauvaise technique. Proposer : chaussures running stables, réduire intensité, vérifier technique, médecin si persistance","C'est normal pendant le cardio intensif — lui dire de continuer à s'y habituer progressivement","Lui conseiller de faire uniquement du cardio en piscine pour éviter tout impact sur les articulations","Lui arrêter tout cardio définitivement et le remplacer par du vélo couché uniquement"],c:0,e:"Douleurs tibia/genoux : mauvaises chaussures (trop souples, pas de stabilité), surcharge trop rapide, mauvaise technique. Solutions : chaussures running stables (ASICS/Saucony/HOKA), réduction progressive, vérification technique. Si persistance → médecin."},
+  {b:"Situations Complexes",q:"Un client demande une réduction sur son abonnement mensuel à 1600 MAD. Que lui proposes-tu selon le guide ?",o:["Consulter le coach avant toute proposition car les réductions ne sont jamais décidées par l'assistante","Offre 6 mois à 7800 MAD (3 tranches de 2600) ou 12 mois à 13200 MAD (6 tranches de 2200)","Il n'y a aucune réduction ni offre possible — le prix de 1600 MAD est fixe sans exception","Réduction directe à 1400 MAD car c'est dans la marge de négociation acceptable sans consulter le coach"],c:1,e:"On ne baisse pas le mensuel. On propose l'engagement long terme : 6 mois à 7800 MAD (3×2600 = 1300/mois) ou 12 mois à 13200 MAD (6×2200 = 1100/mois). Ne jamais proposer à un client déjà en tarif réduit."},
+  {b:"Situations Complexes",q:"Un client est en déplacement professionnel 5 jours. Il n'a pas accès à sa salle habituelle. Comment réagis-tu proactivement ?",o:["Lui proposer uniquement du cardio en extérieur pendant son absence car c'est la seule option sans salle","Lui proposer proactivement un programme sans matériel adapté + régime simplifié adapté à la restauration de voyage","Lui dire de reprendre normalement à son retour car 5 jours de pause ne nuisent pas à la progression","Contacter le coach pour qu'il crée un nouveau programme de déplacement car c'est hors du périmètre de l'assistante"],c:1,e:"Proactivité : proposer un programme sans matériel (bodyweight) + régime simplifié adapté aux contraintes du déplacement. Ne pas attendre que le client le demande."},
+  {b:"Situations Complexes",q:"Un client ORANGE se plaint d'une baisse d'énergie importante depuis 1 semaine. Quelles causes explores-tu en premier ?",o:["Changer la couleur vers ROUGE pour augmenter les calories car la baisse d'énergie indique un sous-alimentation","Le déficit calorique est trop important — augmenter immédiatement de 300 kcal pour relancer l'énergie","Vérifier sommeil, timing du dernier repas, hydratation/sel, excès de café — avant de toucher aux calories","Réduire le cardio de moitié car c'est la principale cause de fatigue chez les clients en programme"],c:2,e:"Baisse d'énergie : vérifier en priorité sommeil (qualité et quantité), timing dernier repas (3h avant dormir), hydratation et sel, excès de café. Avant de toucher aux calories, on investigue d'abord."},
+  {b:"Situations Complexes",q:"Tu suspectes qu'un client triche sur ses photos de repas. Comment gères-tu ça sans l'accuser directement ?",o:["Lui demander de filmer la préparation et la pesée de ses repas sous prétexte d'améliorer la précision","Ignorer la suspicion et attendre que la stagnation confirme d'elle-même que le client ne suit pas","Lui envoyer un message stern lui rappelant que la triche n'aide que lui et impacte ses résultats","L'accuser directement en lui montrant que les macros de ses photos ne collent pas avec sa stagnation"],c:0,e:"Sans accuser : demander les vidéos de préparation et de pesée des repas sous prétexte de vérifier la précision des grammages. Si le client refuse ou évite → indication que quelque chose ne va pas."},
+  {b:"Situations Complexes",q:"Pour vérifier l'engagement d'un client qui ne répond plus aux questions globales, comment poses-tu tes questions ?",o:["Au téléphone directement pour forcer une réponse détaillée et sincère","Séparément et à des moments différents — une question à la fois pour éviter les réponses superficielles 'oui' à tout","En groupe par écrit dans un message structuré avec une liste des points à vérifier","En une seule question récapitulative pour aller à l'essentiel : 'Tu manges bien, tu dors bien, tu t'entraînes bien ?'"],c:1,e:"Poser les questions séparément : une à la fois, à des moments différents. Quand on pose tout en une fois, le client répond 'oui' par automatisme. Des questions ciblées séparées obtiennent des réponses sincères."},
+  {b:"Situations Complexes",q:"Un client suit parfaitement son programme depuis 5 semaines mais n'a aucun résultat visible. Il commence à perdre confiance. Quelle est ta démarche complète ?",o:["Contacter le coach uniquement, sans continuer à interagir avec le client pour éviter de promettre quelque chose","Changer immédiatement sa couleur de régime et augmenter le cardio pour forcer des résultats visibles rapidement","Vérifier toute la liste (photos, grammage, eau, sel, sommeil, vidéos entraînement), si tout bon → escalader au coach, rassurer en recentrant sur force/énergie et non uniquement le visuel","Le rassurer uniquement par des encouragements sans rien changer pour ne pas le perturber davantage"],c:2,e:"Démarche : (1) vérifier chaque élément méthodiquement, (2) si tout respecté → escalader au coach, (3) rassurer le client en recentrant sur les vrais indicateurs : force, énergie, récupération — pas uniquement le visuel."},
+
+  // BLOC 6 — SOMMEIL, STRESS & ÉNERGIE (6 questions)
+  {b:"Sommeil, Stress & Énergie",q:"Un client se réveille fatigué malgré 8h de sommeil. Il mange bien et s'entraîne correctement. Quelles causes non évidentes explores-tu ?",o:["Trop de protéines le soir qui alourdissent la digestion et perturbent le sommeil profond","Régime trop pauvre en glucides qui prive le cerveau de carburant pendant le sommeil","Pas assez de stretching après les séances ce qui empêche une récupération musculaire complète","Écrans avant de dormir (lumières bleues), repas trop proche du coucher, excès de café en journée, déséquilibre sodium/hydratation"],c:3,e:"Réveil fatigué malgré 8h : lumières bleues des écrans (perturbent mélatonine + cycle circadien), repas trop proche du coucher, excès de café, ou déséquilibre hydratation/sodium. Investiguer chaque cause séparément."},
+  {b:"Sommeil, Stress & Énergie",q:"Quelles sont les conséquences d'un stress chronique élevé sur les résultats physiques d'un client ?",o:["Le stress augmente le métabolisme ce qui aide à brûler plus de gras — c'est un avantage si bien canalisé","Hausse du cortisol → perte de muscle + prise de gras + baisse d'immunité + manque de concentration + stagnation","Le stress impacte uniquement le sommeil mais pas directement la composition corporelle","Aucun impact si le régime et l'entraînement sont bien suivis — le corps compense naturellement"],c:1,e:"Stress chronique = cortisol élevé = perte de muscle + prise de gras + baisse immunité + manque de concentration + stagnation. Le stress est un facteur de composition corporelle au même titre que l'alimentation."},
+  {b:"Sommeil, Stress & Énergie",q:"Un client s'entraîne très tard (22h-23h) et a une mauvaise qualité de sommeil. Que lui recommandes-tu ?",o:["Prendre un somnifère léger en complément pour compenser la difficulté d'endormissement","S'entraîner encore plus tard (après 23h) pour que la fatigue physique soit maximale et favorise l'endormissement","Si possible décaler ses séances plus tôt. Si impossible, du magnésium peut améliorer la qualité du sommeil","Arrêter les séances du soir définitivement et ne s'entraîner que le matin avant le travail"],c:2,e:"Entraînement tardif = difficulté d'endormissement + mauvaise récupération. Solution : décaler si possible. Si pas possible → magnésium pour améliorer la qualité du sommeil sans changer l'horaire."},
+  {b:"Sommeil, Stress & Énergie",q:"Un client se réveille souvent la nuit pour aller aux toilettes, ce qui perturbe son sommeil. Que lui conseilles-tu ?",o:["Réduire totalement la consommation d'eau à 1L/jour pour éviter les réveils nocturnes","C'est normal et inévitable avec les volumes d'eau recommandés par le programme — il faut s'y adapter","Boire toute son eau quotidienne avant midi pour éviter tout apport hydrique l'après-midi et le soir","Réduire la consommation d'eau LE SOIR seulement et augmenter le matin/journée pour maintenir l'hydratation totale"],c:3,e:"Ne pas réduire l'eau totale, mais la redistribuer. Moins le soir = moins de réveils. Plus le matin et en journée = hydratation maintenue. La qualité du sommeil s'améliore sans compromettre l'hydratation globale."},
+  {b:"Sommeil, Stress & Énergie",q:"Quelle est la routine idéale au réveil selon le guide pour bien démarrer la journée ?",o:["Consulter son téléphone immédiatement pour rattraper les notifications de la nuit et se mettre en mode actif","Boire un café fort immédiatement pour activer le cortisol naturel du matin et se réveiller efficacement","Ne pas toucher le téléphone au réveil, se laver le visage, sortir 5 minutes au soleil pour activer le cycle circadien","Rester au lit 30 minutes supplémentaires en mode repos actif pour laisser le corps se réveiller naturellement"],c:2,e:"Routine idéale : éviter le téléphone (perturbe la mélatonine), se laver le visage, sortir 5 min au soleil. L'exposition à la lumière naturelle active le cycle circadien et favorise le réveil naturel."},
+  {b:"Sommeil, Stress & Énergie",q:"Un client te dit qu'il dort 6h par nuit maximum à cause de son travail. Comment l'aides-tu à limiter l'impact sur ses résultats ?",o:["Augmenter ses calories de 300 kcal pour compenser l'énergie perdue par le manque de sommeil","Lui expliquer l'impact du manque de sommeil sur le cortisol et les résultats, puis travailler sur la qualité : routine coucher, pas d'écrans, magnésium, régularité des horaires","Réduire son entraînement à 1 séance par semaine car la récupération est insuffisante pour plus","Lui dire d'arrêter le programme temporairement car 6h de sommeil rend tout effort contre-productif"],c:1,e:"6h de sommeil = cortisol élevé, récupération insuffisante, stagnation probable. Si la quantité ne peut pas changer → travailler sur la qualité : routine de coucher, pas d'écrans, magnésium, horaires réguliers."},
+
+  // BLOC 7 — RÉTENTION & OFFRES (3 questions)
+  {b:"Rétention & Offres",q:"Quelle est la structure exacte de l'offre 6 mois TGG ?",o:["6400 MAD en 2 tranches de 3200 MAD, soit une économie de 800 MAD par rapport au mensuel","9600 MAD avec réduction de 20% si payé en une seule fois à la signature","7800 MAD en 3 tranches de 2600 MAD payées chaque 30 jours, au lieu de 9600 MAD au tarif mensuel","7800 MAD en un seul paiement comptant, sans possibilité de facilité de paiement"],c:2,e:"Offre 6 mois : 7800 MAD au lieu de 9600 MAD, en 3 tranches de 2600 MAD payées chaque 30 jours. Offre 12 mois : 13200 MAD au lieu de 19200 MAD, en 6 tranches de 2200 MAD."},
+  {b:"Rétention & Offres",q:"Quelles sont les 3 règles absolues pour proposer une promotion long terme à un client ?",o:["En fin de mois + après check-in positif + seulement si le client mentionne lui-même le budget ou la durée","Dès le premier paiement reçu + par message direct avec les tarifs + à tous les clients actifs sans distinction","Lors de la relance paiement mensuelle + message direct court + uniquement aux clients en première année","2-7 jours après son paiement du 2ème mois + intégré dans une conversation existante après interaction positive + jamais à un client déjà en tarif réduit"],c:3,e:"(1) Timing : 2-7 jours après paiement du 2ème mois. (2) Jamais de message promo direct — intégrer dans conversation après interaction positive. (3) Ne JAMAIS proposer à un client déjà en tarif réduit (1100/1200/1300 MAD)."},
+  {b:"Rétention & Offres",q:"Un client paie 1600 MAD/mois depuis 3 mois et te remercie chaleureusement pour le suivi. Quel est le bon moment pour lui proposer la promo 6 mois ?",o:["Attendre le 6ème mois car c'est le moment où les clients commencent à réfléchir à arrêter","Dans 2-7 jours, en intégrant naturellement la promo dans une conversation — après son message positif c'est le timing idéal","Seulement si le client te demande lui-même une réduction ou un engagement plus long","Immédiatement après son message de remerciement en lui envoyant un message promo directement"],c:1,e:"Timing idéal : 2-7 jours après son paiement, intégré dans une conversation existante après une interaction positive (ex: message de remerciement). C'est exactement cette situation — attendre 2-7 jours, puis aborder naturellement."},
+
+  // BLOC 8 — SYSTÈME RIR 2026 (15 questions)
+  {b:"Système RIR 2026",q:"Qu'est-ce que le RIR et comment l'expliquer simplement à un client ?",o:["RIR = indicateur de fréquence cardiaque cible à maintenir pendant les séries de musculation","RIR = nombre total de répétitions effectuées dans la série, indiqué dans le programme pour chaque exercice","RIR = Reps In Rest = temps de repos recommandé entre chaque série pour optimiser la récupération","RIR = Reps In Reserve = nombre de répétitions qu'il te restait possibles à la fin de la série. RIR 2 = tu aurais pu faire encore 2 reps"],c:3,e:"RIR = Reps In Reserve = reps qu'il restait possibles à la fin de la série. RIR 2 sur gros exercices = tu aurais pu faire encore 2 reps. C'est l'indicateur d'intensité du système 2026."},
+  {b:"Système RIR 2026",q:"Un client dit que son programme paraît 'facile' avec peu de séries. Que lui répondre exactement ?",o:["Lui confirmer que le programme peut effectivement être allégé pour les débutants et le laisser choisir","Lui expliquer que c'est un programme avancé qui paraît simple mais cache une difficulté technique","Lui ajouter 2-3 séries supplémentaires par exercice pour qu'il ressente vraiment l'effort et soit convaincu","Le muscle réagit à la tension et à la proximité de l'échec, pas au volume. 3 séries bien faites > 6 séries confortables. Le junk volume fatigue sans gains"],c:3,e:"Réponse exacte : le muscle ne compte pas les séries, il réagit à la tension et à la proximité de l'échec. Trop de volume = junk volume + fatigue sans gains supplémentaires. 3 séries de qualité > 6 séries faciles."},
+  {b:"Système RIR 2026",q:"Quelle est la cible RIR recommandée pour les gros exercices vs les petits exercices ?",o:["RIR 3-4 pour tous les exercices pour éviter le risque de blessure sur tous les mouvements","RIR 0 pour tous les exercices — aller à l'échec complet sur chaque série pour maximiser les gains","RIR 5+ pour protéger les articulations et permettre une progression sur le long terme","Gros exercices : RIR 1-2. Petits exercices : dernière série RIR 0-1"],c:3,e:"Gros exercices (squat, développé, rowing…) : RIR 1-2. Petits exercices (isolation) : dernière série RIR 0-1. On ne va pas à l'échec complet sur les gros exercices pour préserver la technique et éviter les blessures."},
+  {b:"Système RIR 2026",q:"Comment un client progresse-t-il avec le nouveau système ? Dans quel ordre ?",o:["Diminuer les temps de repos progressivement pour rendre les séries plus difficiles sans toucher aux charges","Augmenter le poids directement à chaque séance de 2-5% pour garantir une progression linéaire continue","D'abord augmenter les reps dans la fourchette → quand le haut est atteint → augmenter le poids de 2-5%","Changer d'exercice dès que le programme devient confortable car la variété est la clé de la progression"],c:2,e:"Progression dans l'ordre : (1) augmenter les reps dans la fourchette donnée, (2) quand le maximum est atteint → augmenter le poids de 2-5%. Pas besoin d'augmenter à chaque séance."},
+  {b:"Système RIR 2026",q:"3 choses sont à ÉVITER absolument avec le nouveau système 2026. Lesquelles ?",o:["Éviter le full body, éviter les séances de plus de 45 min, éviter les supersets entre exercices","S'entraîner chaque jour + ajouter des séries 'pour ressentir le muscle' + augmenter les poids chaque semaine","Éviter le cardio, éviter les jours de repos, éviter les exercices d'isolation sur les petits muscles","Éviter l'entraînement le matin, éviter les exercices composés, éviter le deload après chaque cycle"],c:1,e:"Les 3 choses à éviter : (1) s'entraîner chaque jour, (2) ajouter des séries 'pour ressentir le muscle', (3) augmenter les poids chaque semaine sans respecter la progression logique (reps d'abord)."},
+  {b:"Système RIR 2026",q:"Combien de jours de repos ou de repos actif sont obligatoires par semaine avec le nouveau système ?",o:["Aucun jour obligatoire — la récupération se fait naturellement avec la bonne intensité RIR","Minimum 2 jours de repos ou repos actif — ne jamais s'entraîner 6 jours sur 7","1 seul jour de repos suffit si l'intensité des séances est correctement contrôlée avec le RIR","5 jours de repos pour une récupération optimale du système nerveux central"],c:1,e:"Règle : minimum 2 jours de repos ou repos actif obligatoires par semaine. Ne jamais s'entraîner 6 jours sur 7, même avec le système RIR."},
+  {b:"Système RIR 2026",q:"Après combien de semaines faut-il faire un DELOAD et comment ?",o:["Le deload n'est jamais nécessaire avec le système RIR car l'intensité est auto-régulée","Après 5 semaines : réduire les charges d'environ 50% pour récupérer et repartir plus fort","Après 10 semaines : changer complètement de programme car le corps s'est adapté","Après 2 semaines de progression, réduire les charges de 25% pendant 1 semaine puis reprendre"],c:1,e:"Deload après 5 semaines : réduire les charges d'environ 50%. L'objectif est de récupérer le système nerveux et les tissus pour repartir plus fort. C'est obligatoire, pas optionnel."},
+  {b:"Système RIR 2026",q:"Pourquoi le full body 2x/semaine par muscle est-il plus efficace que 1 muscle par jour ?",o:["Parce que les séances sont plus courtes ce qui permet au client de s'entraîner plus facilement","Parce que ça permet de s'entraîner moins souvent tout en couvrant tous les muscles","Parce que 2 stimulations/semaine par muscle donnent de meilleurs gains en hypertrophie : volume mieux réparti, séries de meilleure qualité, moins de surcharge en une séance","Parce que le client s'ennuie moins avec la variété des exercices dans un full body"],c:2,e:"1 muscle/jour = 1 stimulation/semaine + trop de volume en une séance + baisse de qualité en fin de séance. Full body = 2 stimulations/semaine + meilleure répartition du volume + séries de qualité constante."},
+  {b:"Système RIR 2026",q:"Quels sont les VRAIS indicateurs de progrès du programme et ce qui NE compte PAS ?",o:["Reps ↑ + charges ↑ + visuel ↑ + récupération ↑ = vrais indicateurs. ❌ Ne comptent PAS : fatigue, durée, courbatures, transpiration","Fatigue après séance ✅ + courbatures le lendemain ✅ + durée de la séance ✅ = programme qui fonctionne","Nombre de séries total ✅ + nombre d'exercices ✅ + sentiment d'épuisement ✅ = bonne séance","Poids sur la balance ✅ + niveau de sueur ✅ + douleurs musculaires ✅ = programme efficace"],c:0,e:"Vrais indicateurs : reps qui augmentent, charges qui augmentent, évolution visuelle, meilleure récupération. Ne comptent PAS : fatigue, durée, courbatures, transpiration, sentiment d'épuisement."},
+  {b:"Système RIR 2026",q:"Un client dit 'ma3ra9itch' (je ne me suis pas fatigué) après sa séance. Comment réponds-tu ?",o:["C'est l'objectif ! On évite la fatigue inutile. L'objectif est l'hypertrophie pas la fatigue. Ça permet de récupérer vite et soulever plus lourd sans blessure","Lui demander de s'entraîner plus souvent pour compenser le manque de fatigue perçue","Lui confirmer que la séance était peut-être trop légère et qu'il peut augmenter ses poids directement","Lui ajouter des exercices supplémentaires pour qu'il ressente plus d'effort lors de la prochaine séance"],c:0,e:"Ne pas se sentir épuisé = objectif atteint. On veut : fatigue locale du muscle ciblé, récupération rapide, progression continue. La fatigue neurologique excessive nuit aux gains à long terme."},
+  {b:"Système RIR 2026",q:"Pourquoi ne change-t-on pas de programme chaque semaine selon le guide ?",o:["Changer souvent = système nerveux qui repart à zéro + phase d'apprentissage permanent + pas de surcharge progressive possible = pas de gains solides","Parce que le corps brûle moins de calories avec un programme connu, ce qui favorise la perte de gras","Pour des raisons pratiques car créer un nouveau programme chaque semaine prend trop de temps au coach","Pour que le client ne s'ennuie pas trop vite et reste motivé par la familiarité des exercices"],c:0,e:"Changer souvent : système nerveux qui repart à zéro, pas de maîtrise technique, surcharge progressive impossible. On progresse en répétant, maîtrisant et surchargeant — pas en changeant constamment."},
+  {b:"Système RIR 2026",q:"Un client en surplus calorique (ROUGE) s'inquiète de prendre du gras. Comment lui expliques-tu le principe ?",o:["En surplus calorique le gras va toujours augmenter — notre rôle est de contrôler et minimiser cette prise de gras grâce à un bon entraînement et un surplus modéré","Un surplus calorique ne fait prendre que du muscle, jamais du gras","En surplus calorique il est possible de ne prendre aucun gras si l'entraînement est parfait","Le gras n'augmente jamais en surplus si les protéines sont suffisamment hautes"],c:0,e:"La réalité : en surplus calorique le corps stocke inévitablement une partie en gras. Notre rôle n'est pas d'éliminer cette prise de gras (impossible) mais de la minimiser via un surplus modéré, un entraînement de qualité (RIR correct, progression) et un suivi régulier des photos."},
+  {b:"Santé & Cas Médicaux",q:"Un client annonce avoir la goutte (hyperuricémie). Quelles adaptations alimentaires fais-tu en attendant de consulter le coach ?",o:["Réduire les aliments riches en purines : limiter viande rouge, abats, charcuterie, fruits de mer, réduire alcool (surtout bière). Privilégier volaille, œufs, légumes. Augmenter l'eau (2-3L/jour). Ensuite informer le coach","Aucune adaptation, le régime reste identique et le coach s'en occupe","Lui interdire tout sport jusqu'à guérison complète","Supprimer uniquement la viande rouge du régime"],c:0,e:"Adaptations initiales pour la goutte : réduire purines (viande rouge, abats, charcuterie, fruits de mer, bière), augmenter hydratation (eau aide à éliminer l'acide urique), privilégier volaille et œufs. Ces adaptations sont faites EN ATTENDANT l'avis du coach — la goutte reste un cas médical à escalader."},
+  {b:"Système RIR 2026",q:"Comment répondre à un ancien client qui dit 'pourquoi je dois changer si ça marchait avant ?'",o:["'Parce que le coach a décidé de changer le système pour tous les clients sans exception'","'Parce que l'ancien système était moins efficace et la science a prouvé que le volume élevé ne fonctionne pas'","'Parce que ton corps évolue. Ce qui marchait peut fatiguer aujourd'hui. On optimise pour continuer à progresser sans fatigue nerveuse'","'Tu n'es pas obligé de changer, tu peux rester sur l'ancien système si tu préfères'"],c:2,e:"À dire : 'Ton corps évolue. Ce qui marchait peut créer de la fatigue aujourd'hui. On optimise pour continuer à progresser avec moins de fatigue nerveuse.' Le high volume fonctionnait — aujourd'hui on l'optimise."},
+  {b:"Système RIR 2026",q:"Un client a un point faible musculaire (épaules). Comment adapte-t-on son programme ?",o:["On lui dit d'ajouter 10 séries d'épaules supplémentaires à son programme full body existant","On ignore le point faible car le full body le développera naturellement au même rythme que les autres muscles","Base = Full Body. Si besoin, on ajoute un programme FOCUS spécifique (ex: Shoulder Focus) disponible à partir de 3-4-5 séances/semaine","On crée un programme 100% épaules 6 jours sur 7 pour rattraper le retard rapidement"],c:2,e:"Base = Full Body sans focus si pas de point faible. Si un point faible identifié → ajouter programme focus. Le WEAK MUSCLES FOCUS n'est disponible qu'à partir de 3-4-5 séances par semaine."},
+
+  // BLOC 9 — CARDIO & NUTRITION (9 questions)
+  {b:"Cardio & Nutrition",q:"Quelle est la fréquence cardiaque cible à viser pendant une séance cardio ?",o:["140-180 bpm selon l'intensité, la chaleur et le niveau de forme du client","La fréquence cardiaque n'est pas à surveiller — seule la durée de la séance compte","200+ bpm pour atteindre la zone anaérobie et maximiser les calories brûlées","80-100 bpm pour rester dans la zone de combustion des graisses optimale pendant toute la séance"],c:0,e:"Fréquence cardiaque cible pendant le cardio : 140 à 180 bpm. Elle varie selon l'intensité de l'activité, la chaleur extérieure et le niveau de forme du client."},
+  {b:"Cardio & Nutrition",q:"Combien de calories doit brûler une séance cardio en moyenne selon le guide ?",o:["250-350 kcal par séance — pour améliorer le métabolisme, favoriser la perte de gras et l'endurance","500-600 kcal par séance — maximiser la dépense pour compenser les écarts alimentaires éventuels","La dépense calorique exacte du cardio n'est pas à suivre, seule la régularité compte","100-150 kcal par séance — rester bas pour ne pas trop puiser dans les réserves musculaires"],c:0,e:"Objectif : 250-350 kcal par séance cardio. Cela améliore le métabolisme, favorise la perte de gras et améliore l'endurance et la récupération."},
+  {b:"Cardio & Nutrition",q:"Un client a 40 minutes de marche dans son programme et veut faire du vélo à la place. Quelle est l'équivalence exacte ?",o:["40 minutes de vélo = 40 minutes de marche car l'intensité dépend de l'effort personnel fourni","20 minutes de vélo = 40 minutes de marche car le vélo est 2 fois plus intense que la marche","30 minutes de vélo à rythme soutenu = 40 minutes de marche selon le tableau d'équivalences","Le vélo ne peut pas remplacer la marche car ce ne sont pas les mêmes groupes musculaires sollicités"],c:2,e:"Selon le tableau d'équivalences cardio du guide : 30 minutes de vélo à rythme soutenu = 40 minutes de marche. Le rameur ou le stairmaster correspondent à 20 minutes pour la même équivalence."},
+  {b:"Cardio & Nutrition",q:"Pourquoi faut-il éviter les nuggets dans l'alimentation d'un client en programme TGG ?",o:["Parce qu'ils contiennent uniquement trop de sel ce qui provoque de la rétention d'eau","Parce qu'ils sont trop riches en protéines et créent un déséquilibre par rapport aux glucides du régime","Parce qu'ils coûtent trop cher et que l'argent est mieux investi dans des aliments de qualité","Produits ultra-transformés : friture huile de mauvaise qualité, panure = glucides rapides non contrôlés, additifs — impossible à doser dans un régime précis"],c:3,e:"Les nuggets sont ultra-transformés : friture mauvaise huile, panure = glucides rapides, additifs et conservateurs. Composition variable et impossible à doser précisément dans un régime contrôlé."},
+  {b:"Cardio & Nutrition",q:"Pourquoi préfère-t-on éviter les cornflakes dans les régimes TGG ?",o:["Parce qu'ils sont trop caloriques pour tous les régimes et dépassent systématiquement les apports","Parce qu'ils ne contiennent pas assez de protéines et créent un déséquilibre de macros dans le petit déjeuner","Parce qu'ils sont difficiles à doser précisément en grammage et créent des erreurs de calcul","Parce qu'ils contiennent beaucoup de sucre ce qui impacte négativement la production d'insuline"],c:3,e:"Les cornflakes sont à éviter car ils contiennent beaucoup de sucre ce qui impacte négativement la production d'insuline. Une montée d'insuline rapide nuit à la perte de gras et à la stabilité glycémique."},
+  {b:"Cardio & Nutrition",q:"Un client fait du padel 2 fois/semaine. Son programme indique 40 min de marche. Le padel est-il valide en équivalence ?",o:["Non, le padel est un sport compétitif et ne peut pas remplacer le cardio du programme","Oui, 30 minutes de padel = 40 minutes de marche car c'est un sport intense","Oui, 1h30 de padel (match dynamique) = 40 minutes de marche selon le tableau d'équivalences","Oui, 45 minutes de padel = 40 minutes de marche — équivalence standard pour les sports de raquette"],c:2,e:"Selon le tableau d'équivalences du guide : 1h30 de padel (match dynamique) = 40 min de marche. C'est l'équivalence la plus longue du tableau car le padel est moins continu que d'autres activités."},
+  {b:"Cardio & Nutrition",q:"Un client te demande s'il peut remplacer 150g de poulet par des nuggets McDonald's en déplacement. Que lui réponds-tu ?",o:["Oui mais uniquement si c'est occasionnel et qu'il compense les macros sur les autres repas de la journée","Lui demander de sauter ce repas plutôt que de manger des nuggets car c'est moins mauvais que de tricher","Non — nuggets = ultra-transformé, huile mauvaise qualité, panure non contrôlée. Alternatives : thon en conserve, Chergui, œufs durs, fromage + pain complet","Oui car les nuggets contiennent quand même des protéines et restent meilleurs que de ne rien manger"],c:2,e:"Non aux nuggets. Alternatives pour déplacement : thon/sardine en conserve, yaourt protéiné type Chergui (si critères remplis), œufs durs, fromage + pain complet. Des aliments mesurables même en déplacement."},
+  {b:"Cardio & Nutrition",q:"En surplus calorique avec entraînement de qualité, est-il possible de maintenir son % de gras ?",o:["Non, même chez les débutants le surplus se stocke en gras en priorité car c'est la réponse hormonale naturelle","Oui toujours et pour tout le monde — un bon entraînement annule complètement l'effet du surplus","Non, c'est biologiquement impossible — un surplus calorique augmente toujours le % de gras sans exception","Oui, si l'entraînement est de qualité, une partie des calories va vers la construction musculaire. Une recomposition partielle est possible surtout chez les débutants"],c:3,e:"En surplus avec entraînement de qualité, une partie des calories va vers la construction musculaire. Chez les débutants ou après une pause, une recomposition partielle (muscle ↑, gras =) est possible. Pas systématique, mais documenté."},
+  {b:"CRM & Système",q:"Comment organiser le suivi des propositions de promo long terme dans le nouveau système ?",o:["Les noter uniquement dans sa tête pour ne pas alourdir le système","Les noter dans la partie CHECKINS du client : quelle promo proposée, quand, et la raison du refus si applicable","Les noter dans un fichier Excel séparé pour ne pas mélanger avec le suivi client","Les envoyer en message groupé à tous les clients éligibles en même temps"],c:1,e:"Dans le nouveau système : noter dans la section CHECKINS du client — quelle promo a été proposée, la date, et si refus : la raison notée (trop cher, pas intéressé, déjà réduit…). Cela évite de reproposer deux fois et permet au coach de suivre le taux de conversion."},
+    {b:"Communication Client",q:"Un client utilise des gros mots et se montre irrespectueux dans ses messages. Que fais-tu ?",o:["Communiquer immédiatement au coach pour qu'il remette le client à sa place — ce n'est pas à l'assistante de gérer ce type de comportement","Ignorer et continuer comme si de rien n'était pour maintenir la relation","Bloquer directement le client sans en informer le coach","Répondre sur le même ton pour lui montrer que c'est inacceptable"],c:0,e:"Un client irrespectueux = escalader AU COACH immédiatement. L'assistante ne doit pas gérer seule ce type de situation ni s'abaisser à répondre sur le même registre. Le coach remet le client à sa place avec l'autorité qui convient."},
+  {b:"Process & Organisation",q:"Pourquoi est-il important de partager les progrès ET les non-progrès des clients avec le coach ?",o:["Pour montrer qu'on travaille bien et justifier son salaire","C'est obligatoire uniquement pour les clients en période de renouvellement","Uniquement pour les progrès — les non-progrès font mauvaise impression au coach","Les progrès sont du contenu potentiel pour Instagram. Les non-progrès permettent au coach d'intervenir rapidement avant que le client ne se démotive ou résilie"],c:3,e:"Double utilité : progrès = contenu Instagram + motivation du coach. Non-progrès = alerte précoce qui permet au coach d'intervenir (ajuster programme, appeler le client, proposer une solution) avant que la situation ne se détériore et mène à une résiliation."},
+  {b:"Santé & Cas Médicaux",q:"Un client signale une constipation depuis 3 jours. Quelle est la procédure selon le guide ?",o:["Changer son régime alimentaire vers plus de fibres et de légumes verts dès le lendemain","Lui conseiller des laxatifs naturels comme les pruneaux et l'huile d'olive pour débloquer rapidement","Vérifier la consommation d'eau et de légumes. Si ça dure plus de 5 jours → prévenir le coach","Lui demander d'arrêter l'entraînement jusqu'à résolution car l'effort physique peut aggraver la situation"],c:2,e:"Constipation : vérifier eau et légumes en premier. Si ça dure plus de 5 jours → prévenir le coach. Ne jamais prescrire de médicaments ni changer drastiquement le régime sans validation."},
+  {b:"Santé & Cas Médicaux",q:"Un client envoie des résultats d'analyse sanguine. Que fais-tu ?",o:["Ignorer les analyses car ce n'est pas dans les attributions d'une assistante de coaching","Lui conseiller des suppléments pour corriger les carences en fer, magnésium ou vitamines selon les résultats","Si c'est en rapport avec la créatine → page spécifique créatine du guide. Tout autre résultat → communiquer au coach","Analyser les résultats toi-même et adapter le régime selon les carences et déséquilibres identifiés"],c:2,e:"Analyses sanguines : si lié à la créatine → page dédiée créatine. Pour tout autre résultat → communiquer au coach immédiatement. L'assistante ne fait aucune interprétation médicale."},
+  {b:"Santé & Cas Médicaux",q:"Un client a des douleurs aux genoux pendant ses exercices en salle. Quelle est la procédure exacte ?",o:["Lui recommander des genouillères et lui dire de continuer à s'entraîner normalement avec","Comprendre précisément le problème, lui faire tester Lying Leg Curls + Leg Extension, puis selon le feedback orienter vers le programme machines (éviter squats et leg press)","Lui arrêter tout entraînement des jambes définitivement jusqu'à consultation médicale complète","Lui enlever uniquement les squats et lui dire de continuer tous les autres exercices normalement"],c:1,e:"Procédure genoux : (1) comprendre précisément le problème, (2) faire tester Lying Leg Curls + Leg Extension, (3) selon le feedback → programme machines pour éviter squats et leg press."},
+  {b:"Santé & Cas Médicaux",q:"Un client présente une rétention d'eau importante (prise de poids rapide sans changer le régime). Quelles sont les causes à explorer ?",o:["Uniquement trop de sel dans le régime — réduire le sel suffit dans 90% des cas","Uniquement un problème hormonal grave nécessitant une consultation médicale immédiate","Trop de protéines dans le régime qui provoquent une rétention osmotique dans les cellules","Manque d'eau + stress élevé (cortisol) + trop de sel/produits transformés + changements hormonaux + mauvais sommeil + entraînements intenses (inflammation temporaire)"],c:3,e:"Causes de rétention d'eau : pas assez d'eau (le corps garde ce qu'il a), stress (cortisol), excès de sel, changements hormonaux, mauvais sommeil, entraînements intenses. C'est temporaire et non du vrai gras."},
+  {b:"Santé & Cas Médicaux",q:"Un client t'annonce avoir une déchirure musculaire. Quelle est l'action immédiate ?",o:["Lui recommander des anti-inflammatoires et de la glace pendant 72h avant de reprendre l'entraînement","Lui créer un programme de rééducation adapté en évitant le muscle blessé pour les 4 prochaines semaines","Communiquer au coach IMMÉDIATEMENT — déchirure musculaire = problème de santé grave hors périmètre de l'assistante","Lui conseiller de se reposer 2 semaines puis de reprendre normalement avec des charges réduites"],c:2,e:"Déchirure musculaire = problème de santé grave → communiquer AU COACH IMMÉDIATEMENT. L'assistante ne gère pas seule les blessures sérieuses ni ne donne de protocole de rééducation."},
+
+  // BLOC 11 — CRM & SYSTÈME (10 questions)
+  {b:"CRM & Système",q:"Un client non payé, en combien de temps devient-il inactif dans le système CRM ?",o:["Il ne devient jamais inactif automatiquement — c'est l'assistante qui doit le désactiver manuellement","Après 30 jours automatiquement à la fin du cycle de facturation","Après 7 jours si le client n'a pas d'abonnement avec statut 'payé plus tard'","Après 3 jours sans paiement confirmé dans le système"],c:2,e:"Un client non payé devient inactif dans le système après 7 jours, sauf s'il a un statut 'payé plus tard' dans le CRM."},
+  {b:"CRM & Système",q:"Un client paie aujourd'hui mais veut commencer le coaching dans 1 mois. Comment gères-tu ça dans le système ?",o:["On entre le client avec la date d'aujourd'hui et on adapte tout dans 1 mois quand il commence vraiment","On entre le client maintenant avec la date de début souhaitée. L'abonnement reste dans 'actif' et le paiement est comptabilisé à la date réelle du paiement","On attend 1 mois avant d'entrer le client dans le système pour que la date de début soit correcte","On refuse de prendre le paiement maintenant et on lui demande de repayer dans 1 mois pour la bonne date"],c:1,e:"Entrer le client maintenant avec la date de début souhaitée. L'abonnement reste dans 'abonnement actif' et le paiement est comptabilisé à la date réelle du paiement."},
+  {b:"CRM & Système",q:"Comment vérifier qu'un client suit correctement ses calories et macros avec le système de recettes ?",o:["En lui demandant de prendre des photos de tous ses repas chaque jour pour comparaison manuelle","En lui faisant remplir un tableau Excel récapitulatif chaque soir avec ses repas de la journée","En se basant uniquement sur les photos de progression hebdomadaires pour déduire le respect du régime","Aller dans Nutrition Logger pour accéder aux entrées Log Food du client et vérifier directement ses choix alimentaires, macros et calories"],c:3,e:"Avec Log Food / Nutrition Logger : aller dans Nutrition Logger pour accéder aux entrées du client et vérifier directement ses choix alimentaires, macros et calories. C'est la vérification officielle."},
+  {b:"CRM & Système",q:"Un couple souhaite s'abonner ensemble et demande un prix de couple. Quel est le tarif applicable ?",o:["1600 MAD × 2 = 3200 MAD sans aucune réduction car chaque suivi est individuel","Le même tarif de 1600 MAD par personne mais avec un suivi simplifié pour compenser","2400 MAD pour 2 personnes soit une réduction de 25% sur le tarif mensuel normal","3000 MAD pour 2 personnes (couple ou 2 amis) selon le tarif couple du guide"],c:3,e:"Pour un couple ou 2 amis : 3000 MAD pour les 2. C'est le tarif couple officiel selon le guide IMPORTANT À LIRE."},
+  {b:"Diet & Calories",q:"Un client demande de remplacer ses glucides par des protéines supplémentaires car il pense que c'est meilleur pour la prise de muscle. Est-ce possible ?",o:["Non — chaque macro a un rôle distinct. Les glucides = énergie pour l'entraînement. Les protéines = reconstruction musculaire. Les remplacer crée des déséquilibres fonctionnels","Oui, les glucides et protéines ont les mêmes calories donc c'est interchangeable","Oui si le total calorique reste le même, peu importe la répartition des macros","Oui uniquement les jours sans entraînement"],c:0,e:"Les macros ne sont pas interchangeables. Glucides = carburant principal pour les séances (baisse = performances réduites, fatigue). Protéines = reconstruction musculaire (excès ne compense pas le manque de glucides). Chaque macro a sa fonction spécifique dans le programme — modifier la répartition doit toujours passer par le coach."},
+  {b:"CRM & Système",q:"Un client qui paie 1300 MAD/mois te demande la promo 6 mois. Que fais-tu ?",o:["On lui propose uniquement la promo 12 mois car elle est proportionnellement plus avantageuse","On lui demande d'abord de revenir au tarif plein 1600 MAD puis on lui propose la promo 6 mois","On lui explique qu'il bénéficie déjà d'un tarif avantageux — les promos long terme sont réservées au tarif plein de 1600 MAD","On lui propose la promo car 7800 MAD reste une économie significative même depuis un tarif réduit"],c:2,e:"Règle absolue : ne JAMAIS proposer de promotion à un client payant déjà un tarif réduit (1100/1200/1300 MAD). Les promos long terme sont uniquement pour les clients au tarif plein de 1600 MAD."},
+  {b:"CRM & Système",q:"Un client avec une offre 6 mois veut arrêter après 2 mois (2 tranches déjà payées). Quelle est la position TGG ?",o:["Lui proposer de transférer les mois restants à un ami","Continuer le coaching de force jusqu'à la fin des 6 mois","En principe on ne rembourse pas — le client a signé un engagement. Cependant chaque cas est différent : communiquer au coach qui décidera selon la situation","Rembourser les 4 mois restants immédiatement pour maintenir une bonne image"],c:2,e:"Règle TGG : les offres long terme ne sont pas remboursables en principe (engagement pris). Mais chaque situation est unique (maladie, déménagement, cas exceptionnel) → toujours remonter au coach avant de donner une réponse définitive au client. L'assistante ne prend jamais de décision financière seule."},
+  {b:"CRM & Système",q:"Combien de temps faut-il viser comme rétention moyenne par client selon le guide ?",o:["La rétention n'a pas d'objectif chiffré — l'important est la satisfaction du client","8 mois minimum comme moyenne de rétention par client","3 mois minimum comme objectif de base pour amortir le temps d'onboarding du client","12 mois obligatoires pour tous les clients comme objectif fixe"],c:1,e:"Objectif de rétention : minimum 8 mois par client comme moyenne. C'est l'objectif pour avoir de vrais résultats à partager et un client qui peut recommander TGG."},
+  {b:"CRM & Système",q:"Tu as un client JAUNE stagnant depuis 3 semaines ET un paiement dû dans 2 jours. Dans quel ordre idéal gères-tu la situation ?",o:["Update → investigation stagnation → solutions proposées → paiement en dernier avec douceur. Si stagnation grave → signaler au coach dans le récap d'abord","Les deux simultanément dans un seul message pour être efficace et ne pas spammer le client","Attendre que le coach règle la stagnation avant d'aborder quoi que ce soit avec le client","Paiement d'abord car c'est urgent financièrement, puis investiguer la stagnation après"],c:0,e:"Ordre optimal : update d'abord → investiguer la stagnation → proposer des solutions → paiement ensuite avec douceur. Si stagnation sérieuse (tout respecté sans résultat), signaler au coach dans le récap avant même la relance."},
+  {b:"CRM & Système",q:"Un nouveau client rejoint le programme. Lui accorde-t-on plus ou moins d'attention qu'aux clients existants ? Pourquoi ?",o:["Moins d'attention car il ne connaît pas encore le programme et les questions sont trop basiques","La même attention pour tous sans distinction car l'équité entre clients est un principe fondamental","Plus d'attention — les nouveaux clients ont besoin de plus d'accompagnement pour comprendre le système, bien démarrer et prendre de bonnes habitudes","Plus d'attention uniquement si le client est catégorisé JAUNE car c'est le plus complexe à gérer"]  ,c:2,e:"Les nouveaux clients nécessitent plus de temps et d'attention. Ils doivent comprendre le système, les régimes, les objectifs, et prendre de bonnes habitudes dès le départ. Un bon démarrage = meilleure rétention."},
+  {b:"Diet & Calories",q:"Un client JAUNE ne parvient pas à atteindre ses 140g de protéines quotidiens. Il propose de réduire ses glucides pour compenser. Ta réponse ?",o:["Bonne idée si le total calorique reste identique","Oui, les macros sont interchangeables","Non — glucides et protéines ont des rôles distincts. Il faut augmenter les sources protéiques (viande, poisson, œufs, yaourt protéiné) sans toucher aux glucides","Oui uniquement les jours sans entraînement"],c:2,e:"Les 140g de protéines minimum sont non-négociables (préservation musculaire). Les glucides et protéines ont des rôles distincts et ne se remplacent pas. Solution : augmenter les sources protéiques sans modifier les glucides."},
+  {b:"Process & Organisation",q:"Quel est l'ordre correct des priorités quand un client stagne ET a un paiement dû dans 2 jours ?",o:["Paiement en premier car c'est urgent financièrement","Signaler au coach uniquement","Update → investiguer la stagnation → proposer des solutions → aborder le paiement avec douceur en dernier","Attendre que le coach règle la stagnation avant de parler paiement"],c:2,e:"L'ordre optimal : update d'abord → investigation → solutions → paiement. Aborder le paiement avant d'avoir résolu le problème du client = mauvaise approche relationnelle. Si la stagnation est sérieuse, la noter dans le récap coach AVANT la relance paiement."}
+];
+
+let cur=0, score=0, answered=0, userName="", bScores={}, missedQ=[];
+let startTime=0, timerInterval=null;
+
+function formatTime(ms){
+  const s=Math.floor(ms/1000), m=Math.floor(s/60);
+  return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+function startQuiz(){
+  const n=document.getElementById('user-name').value.trim();
+  userName=n||"Assistante"; cur=0; score=0; answered=0; bScores={}; missedQ=[];
+  startTime=Date.now();
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    document.getElementById('timer-badge').textContent=formatTime(Date.now()-startTime);
+  },1000);
+  document.getElementById('screen-intro').classList.remove('active');
+  document.getElementById('screen-quiz').classList.add('active');
+  document.getElementById('score-badge').style.display='block';
+  render();
+}
+
+function render(){
+  const q=Q[cur], tot=Q.length;
+  document.getElementById('q-number').textContent=`Q${cur+1} / ${tot}`;
+  document.getElementById('q-bloc').textContent=q.b;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('prog-label').textContent=`Question ${cur+1} / ${tot}`;
+  const pct=Math.round((cur/tot)*100);
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('score-badge').textContent=`${score} / ${answered}`;
+  const oc=document.getElementById('q-options');
+  oc.innerHTML='';
+  const L=['A','B','C','D'];
+  q.o.forEach((opt,i)=>{
+    const d=document.createElement('div');
+    d.className='option';
+    d.innerHTML=`<span class="opt-letter">${L[i]}</span><span>${opt}</span>`;
+    d.onclick=()=>answer(i);
+    oc.appendChild(d);
+  });
+  document.getElementById('q-explanation').classList.remove('show');
+  document.getElementById('q-explanation').innerHTML='';
+  document.getElementById('btn-next').classList.remove('show');
+  document.getElementById('btn-next').textContent=cur<Q.length-1?'QUESTION SUIVANTE →':'VOIR MES RÉSULTATS →';
+}
+
+function answer(idx){
+  const q=Q[cur];
+  document.querySelectorAll('.option').forEach(o=>{o.classList.add('disabled');o.onclick=null;});
+  answered++;
+  if(!bScores[q.b])bScores[q.b]={c:0,t:0};
+  bScores[q.b].t++;
+  if(idx===q.c){score++;bScores[q.b].c++;document.querySelectorAll('.option')[idx].classList.add('correct');}
+  else{
+    document.querySelectorAll('.option')[idx].classList.add('wrong');
+    document.querySelectorAll('.option')[q.c].classList.add('correct');
+    missedQ.push({b:q.b, q:q.q, correct:q.o[q.c], num:cur+1});
+  }
+  const e=document.getElementById('q-explanation');
+  e.innerHTML=`<strong>💡 Explication</strong>${q.e}`;
+  e.classList.add('show');
+  document.getElementById('btn-next').classList.add('show');
+  document.getElementById('score-badge').textContent=`${score} / ${answered}`;
+}
+
+function nextQuestion(){
+  if(cur<Q.length-1){cur++;render();window.scrollTo({top:0,behavior:'smooth'});}
+  else showResults();
+}
+
+// ============================================================
+// CONFIGURATION NOTION — À remplir une seule fois
+// 1. Va sur https://www.notion.so/my-integrations
+// 2. Crée une intégration, copie le token ci-dessous
+// 3. Dans Notion, ouvre la base "RÉSULTATS QUIZ ASSISTANTES"
+//    → clique "..." en haut à droite → "Connections" → ajoute ton intégration
+// ============================================================
+// ⚙️ WORKER URL — À remplir après avoir déployé le Cloudflare Worker
+// Étapes : cloudflare.com/workers → colle le code du fichier notion-worker.js → deploy → copie l'URL ici
+const WORKER_URL = "https://tgg-notion-proxy.abouda28.workers.dev/";
+
+const NOTION_DB_ID = "7e0140ad-3694-4051-82f3-ca854a009dbc";
+
+async function sendToNotion(pct, gc) {
+  if (!WORKER_URL) return "no_worker";
+
+  const niveauMap = {
+    'grade-a': '🏆 Excellent',
+    'grade-b': '💪 Bon niveau',
+    'grade-c': '📚 Moyen',
+    'grade-d': '🔄 Insuffisant'
+  };
+
+  const blocMapping = {
+    "Catégorisation":           "Catégorisation",
+    "Diet & Calories":          "Diet & Calories",
+    "Process & Organisation":   "Process & Organisation",
+    "Communication Client":     "Communication Client",
+    "Situations Complexes":     "Situations Complexes",
+    "Sommeil, Stress & Énergie":"Sommeil Stress Énergie",
+    "Rétention & Offres":       "Rétention & Offres",
+    "Système RIR 2026":         "Système RIR 2026",
+    "Cardio & Nutrition":       "Cardio & Nutrition",
+    "Santé & Cas Médicaux":     "Santé & Cas Médicaux",
+    "CRM & Système":            "CRM & Système"
+  };
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const properties = {
+    "Nom":             { title:    [{ text: { content: userName } }] },
+    "Score":           { number:   score },
+    "Score %":         { number:   pct / 100 },
+    "Total Questions": { number:   Q.length },
+    "Niveau":          { select:   { name: niveauMap[gc] } },
+    "Date du test":    { date:     { start: today } }
+  };
+
+  Object.entries(bScores).forEach(([bloc, d]) => {
+    const key = blocMapping[bloc] || bloc;
+    properties[key] = { rich_text: [{ text: { content: `${d.c} / ${d.t}` } }] };
+  });
+
+  try {
+    // Appel direct au Worker Cloudflare — pas de problème CORS
+    const resp = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ parent: { database_id: NOTION_DB_ID }, properties })
+    });
+    if (resp.ok) return "ok";
+    const txt = await resp.text().catch(() => "");
+    console.error("Worker error:", resp.status, txt);
+    return "error";
+  } catch(e) {
+    console.error("Worker fetch error:", e.message);
+    return "error";
+  }
+}
+
+async function showResults(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  const elapsed=Date.now()-startTime;
+  document.getElementById('screen-quiz').classList.remove('active');
+  document.getElementById('screen-results').classList.add('active');
+  const pct=Math.round((score/Q.length)*100);
+  let em,gr,gc;
+  if(pct>=85){em='🏆';gr='EXCELLENT — PRÊTE POUR LE TERRAIN';gc='grade-a';}
+  else if(pct>=70){em='💪';gr='BON NIVEAU — QUELQUES POINTS À REVOIR';gc='grade-b';}
+  else if(pct>=50){em='📚';gr='MOYEN — RELIRE LE GUIDE ATTENTIVEMENT';gc='grade-c';}
+  else{em='🔄';gr='INSUFFISANT — FORMATION À REFAIRE';gc='grade-d';}
+  document.getElementById('res-emoji').textContent=em;
+  document.getElementById('res-name').textContent=userName.toUpperCase();
+  document.getElementById('res-score').textContent=score;
+  document.getElementById('res-total').textContent=`/ ${Q.length} questions  •  ${pct}% de réussite`;
+  const ge=document.getElementById('res-grade');
+  ge.textContent=gr;ge.className=`result-grade ${gc}`;
+
+  // ⏱ Chronomètre
+  const mins=Math.floor(elapsed/60000), secs=Math.floor((elapsed%60000)/1000);
+  const timeStr=`${mins} min ${secs} sec`;
+  const avgSec=Math.round(elapsed/Q.length/1000);
+  document.getElementById('res-timer').innerHTML=`⏱ Temps total : <strong>${timeStr}</strong> &nbsp;•&nbsp; ~${avgSec}s par question`;
+
+  // 🟩🟨🟥 Blocs colorés
+  const bd=document.getElementById('bloc-breakdown');
+  bd.innerHTML='';
+  Object.entries(bScores).forEach(([b,d])=>{
+    const p=Math.round((d.c/d.t)*100);
+    const cls=p>=80?'ok':p>=50?'mid':'bad';
+    const icon=p>=80?'✅':p>=50?'⚠️':'❌';
+    const div=document.createElement('div');
+    div.className=`bloc-stat ${cls}`;
+    div.innerHTML=`<div class="bloc-name">${icon} ${b}</div><div class="bloc-score">${d.c} / ${d.t}</div><div class="bloc-pct">${p}% de réussite</div>`;
+    bd.appendChild(div);
+  });
+
+  // ❌ Questions ratées
+  const ms=document.getElementById('missed-section');
+  ms.innerHTML='';
+  if(missedQ.length>0){
+    ms.innerHTML=`<div class="missed-title">❌ ${missedQ.length} QUESTION${missedQ.length>1?'S':''} RATÉE${missedQ.length>1?'S':''}</div>`;
+    missedQ.forEach(m=>{
+      const div=document.createElement('div');
+      div.className='missed-item';
+      div.innerHTML=`<div class="missed-bloc-tag">${m.b}</div><div class="missed-q">Q${m.num}. ${m.q}</div><div class="missed-ans">✅ Bonne réponse : <span>${m.correct}</span></div>`;
+      ms.appendChild(div);
+    });
+  }
+
+  // Notification d'envoi Notion
+  const notif = document.createElement('div');
+  notif.style.cssText='margin:20px auto 0;padding:12px 20px;border-radius:10px;font-size:13px;display:inline-block;';
+
+  if (!WORKER_URL) {
+    notif.style.background='rgba(230,57,70,0.1)';
+    notif.style.border='1px solid rgba(230,57,70,0.4)';
+    notif.style.color='#E63946';
+    notif.innerHTML='⚠️ Worker URL manquante — résultats non envoyés. <br><small>Déploie le Cloudflare Worker et colle l\'URL dans le fichier HTML (variable WORKER_URL).</small>';
+  } else {
+    notif.style.background='rgba(201,168,76,0.1)';
+    notif.style.border='1px solid rgba(201,168,76,0.3)';
+    notif.style.color='#C9A84C';
+    notif.textContent='⏳ Envoi des résultats dans Notion...';
+    document.querySelector('.results-wrap').insertBefore(notif, document.querySelector('.btn-restart'));
+
+    const status = await sendToNotion(pct, gc);
+    if (status === 'ok') {
+      notif.style.background='rgba(45,198,83,0.1)';
+      notif.style.border='1px solid rgba(45,198,83,0.4)';
+      notif.style.color='#2DC653';
+      notif.textContent='✅ Résultats enregistrés dans Notion !';
+    } else {
+      notif.style.background='rgba(230,57,70,0.1)';
+      notif.style.border='1px solid rgba(230,57,70,0.4)';
+      notif.style.color='#E63946';
+      notif.innerHTML='❌ Envoi Notion échoué (CORS bloqué par le navigateur).<br><small>Solution : ouvre le fichier depuis un serveur web ou héberge-le sur GitHub Pages / Netlify.</small><br><br>' +
+        '<strong>Résultats à copier manuellement :</strong><br>' +
+        userName + ' — ' + score + '/' + Q.length + ' (' + pct + '%) — ' + gr;
+    }
+  }
+
+  document.querySelector('.results-wrap').insertBefore(notif, document.querySelector('.btn-restart'));
+}
+
+function restartQuiz(){
+  document.getElementById('timer-badge').textContent='00:00';
+  document.getElementById('screen-results').classList.remove('active');
+  document.getElementById('screen-intro').classList.add('active');
+  document.getElementById('score-badge').style.display='none';
+}
+</script>
+</body>
+</html>
