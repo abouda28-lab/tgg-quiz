@@ -334,7 +334,7 @@ function answer(idx){
   else{
     document.querySelectorAll('.option')[idx].classList.add('wrong');
     document.querySelectorAll('.option')[q.c].classList.add('correct');
-    missedQ.push({b:q.b, q:q.q, correct:q.o[q.c], num:cur+1});
+    missedQ.push({b:q.b, q:q.q, wrong:q.o[idx], correct:q.o[q.c], num:cur+1});
   }
   const e=document.getElementById('q-explanation');
   e.innerHTML=`<strong>💡 Explication</strong>${q.e}`;
@@ -448,7 +448,7 @@ async function showResults(){
     missedQ.forEach(m=>{
       const div=document.createElement('div');
       div.className='missed-item';
-      div.innerHTML=`<div class="missed-bloc-tag">${m.b}</div><div class="missed-q">Q${m.num}. ${m.q}</div><div class="missed-ans">✅ Bonne réponse : <span>${m.correct}</span></div>`;
+      div.innerHTML=`<div class="missed-bloc-tag">${m.b}</div><div class="missed-q">Q${m.num}. ${m.q}</div><div class="missed-ans wrong-ans">❌ Ta réponse : <span style="color:#E63946">${m.wrong}</span></div><div class="missed-ans">✅ Bonne réponse : <span>${m.correct}</span></div>`;
       ms.appendChild(div);
     });
   }
