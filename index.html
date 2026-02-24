@@ -357,13 +357,11 @@ function nextQuestion(){
 // ============================================================
 // ⚙️ WORKER URL — À remplir après avoir déployé le Cloudflare Worker
 // Étapes : cloudflare.com/workers → colle le code du fichier notion-worker.js → deploy → copie l'URL ici
-const WORKER_URL = "https://tgg-notion-proxy.abouda28.workers.dev/";
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbzsPMAMB2fDei_Y5FwHcsjHKNPj2LZEEy5BRZbT3xLQFhUXnO3JQDaNqh4EK2VFS4lh/exec";
 
 const NOTION_DB_ID = "7e0140ad-3694-4051-82f3-ca854a009dbc";
 
-async function sendToNotion(pct, gc) {
-  if (!WORKER_URL) return "no_worker";
-
+async function sendToSheets(pct, gc) {
   const niveauMap = {
     'grade-a': '🏆 Excellent',
     'grade-b': '💪 Bon niveau',
@@ -371,50 +369,37 @@ async function sendToNotion(pct, gc) {
     'grade-d': '🔄 Insuffisant'
   };
 
-  const blocMapping = {
-    "Catégorisation":           "Catégorisation",
-    "Diet & Calories":          "Diet & Calories",
-    "Process & Organisation":   "Process & Organisation",
-    "Communication Client":     "Communication Client",
-    "Situations Complexes":     "Situations Complexes",
-    "Sommeil, Stress & Énergie":"Sommeil Stress Énergie",
-    "Rétention & Offres":       "Rétention & Offres",
-    "Système RIR 2026":         "Système RIR 2026",
-    "Cardio & Nutrition":       "Cardio & Nutrition",
-    "Santé & Cas Médicaux":     "Santé & Cas Médicaux",
-    "CRM & Système":            "CRM & Système"
+  const data = {
+    nom: userName,
+    score: score,
+    total: Q.length,
+    pct: pct,
+    niveau: niveauMap[gc],
+    temps: document.getElementById('res-timer').textContent,
+    categorisation: bScores['Catégorisation'] ? bScores['Catégorisation'].c+'/'+bScores['Catégorisation'].t : '',
+    diet: bScores['Diet & Calories'] ? bScores['Diet & Calories'].c+'/'+bScores['Diet & Calories'].t : '',
+    process: bScores['Process & Organisation'] ? bScores['Process & Organisation'].c+'/'+bScores['Process & Organisation'].t : '',
+    communication: bScores['Communication Client'] ? bScores['Communication Client'].c+'/'+bScores['Communication Client'].t : '',
+    situations: bScores['Situations Complexes'] ? bScores['Situations Complexes'].c+'/'+bScores['Situations Complexes'].t : '',
+    sommeil: bScores['Sommeil, Stress & Énergie'] ? bScores['Sommeil, Stress & Énergie'].c+'/'+bScores['Sommeil, Stress & Énergie'].t : '',
+    retention: bScores['Rétention & Offres'] ? bScores['Rétention & Offres'].c+'/'+bScores['Rétention & Offres'].t : '',
+    rir: bScores['Système RIR 2026'] ? bScores['Système RIR 2026'].c+'/'+bScores['Système RIR 2026'].t : '',
+    cardio: bScores['Cardio & Nutrition'] ? bScores['Cardio & Nutrition'].c+'/'+bScores['Cardio & Nutrition'].t : '',
+    sante: bScores['Santé & Cas Médicaux'] ? bScores['Santé & Cas Médicaux'].c+'/'+bScores['Santé & Cas Médicaux'].t : '',
+    crm: bScores['CRM & Système'] ? bScores['CRM & Système'].c+'/'+bScores['CRM & Système'].t : ''
   };
-
-  const today = new Date().toISOString().split('T')[0];
-
-  const properties = {
-    "Nom":             { title:    [{ text: { content: userName } }] },
-    "Score":           { number:   score },
-    "Score %":         { number:   pct / 100 },
-    "Total Questions": { number:   Q.length },
-    "Niveau":          { select:   { name: niveauMap[gc] } },
-    "Date du test":    { date:     { start: today } }
-  };
-
-  Object.entries(bScores).forEach(([bloc, d]) => {
-    const key = blocMapping[bloc] || bloc;
-    properties[key] = { rich_text: [{ text: { content: `${d.c} / ${d.t}` } }] };
-  });
 
   try {
-    // Appel direct au Worker Cloudflare — pas de problème CORS
-    const resp = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ parent: { database_id: NOTION_DB_ID }, properties })
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
-    const txt = await resp.text().catch(() => "");
-    if (resp.ok) { console.log("Notion OK:", txt); return "ok"; }
-    console.error("Notion/Worker error:", resp.status, txt);
-    return "error";
+    return 'ok';
   } catch(e) {
-    console.error("Worker fetch error:", e.message);
-    return "error";
+    console.error('Sheets error:', e.message);
+    return 'error';
   }
 }
 
@@ -472,7 +457,7 @@ async function showResults(){
   const notif = document.createElement('div');
   notif.style.cssText='margin:20px auto 0;padding:12px 20px;border-radius:10px;font-size:13px;display:inline-block;';
 
-  if (!WORKER_URL) {
+  if (!SHEETS_URL) {
     notif.style.background='rgba(230,57,70,0.1)';
     notif.style.border='1px solid rgba(230,57,70,0.4)';
     notif.style.color='#E63946';
@@ -481,15 +466,15 @@ async function showResults(){
     notif.style.background='rgba(201,168,76,0.1)';
     notif.style.border='1px solid rgba(201,168,76,0.3)';
     notif.style.color='#C9A84C';
-    notif.textContent='⏳ Envoi des résultats dans Notion...';
+    notif.textContent='⏳ Envoi des résultats dans Google Sheets...';
     document.querySelector('.results-wrap').insertBefore(notif, document.querySelector('.btn-restart'));
 
-    const status = await sendToNotion(pct, gc);
+    const status = await sendToSheets(pct, gc);
     if (status === 'ok') {
       notif.style.background='rgba(45,198,83,0.1)';
       notif.style.border='1px solid rgba(45,198,83,0.4)';
       notif.style.color='#2DC653';
-      notif.textContent='✅ Résultats enregistrés dans Notion !';
+      notif.textContent='✅ Résultats enregistrés dans Google Sheets !';
     } else {
       notif.style.background='rgba(230,57,70,0.1)';
       notif.style.border='1px solid rgba(230,57,70,0.4)';
