@@ -369,13 +369,17 @@ async function sendToSheets(pct, gc) {
     'grade-d': '🔄 Insuffisant'
   };
 
-  const data = {
+  const timerText = document.getElementById('res-timer').textContent;
+
+  // Ligne résumé principal
+  const summary = {
+    type: 'résumé',
     nom: userName,
     score: score,
     total: Q.length,
     pct: pct,
     niveau: niveauMap[gc],
-    temps: document.getElementById('res-timer').textContent,
+    temps: timerText,
     categorisation: bScores['Catégorisation'] ? bScores['Catégorisation'].c+'/'+bScores['Catégorisation'].t : '',
     diet: bScores['Diet & Calories'] ? bScores['Diet & Calories'].c+'/'+bScores['Diet & Calories'].t : '',
     process: bScores['Process & Organisation'] ? bScores['Process & Organisation'].c+'/'+bScores['Process & Organisation'].t : '',
@@ -386,15 +390,25 @@ async function sendToSheets(pct, gc) {
     rir: bScores['Système RIR 2026'] ? bScores['Système RIR 2026'].c+'/'+bScores['Système RIR 2026'].t : '',
     cardio: bScores['Cardio & Nutrition'] ? bScores['Cardio & Nutrition'].c+'/'+bScores['Cardio & Nutrition'].t : '',
     sante: bScores['Santé & Cas Médicaux'] ? bScores['Santé & Cas Médicaux'].c+'/'+bScores['Santé & Cas Médicaux'].t : '',
-    crm: bScores['CRM & Système'] ? bScores['CRM & Système'].c+'/'+bScores['CRM & Système'].t : ''
+    crm: bScores['CRM & Système'] ? bScores['CRM & Système'].c+'/'+bScores['CRM & Système'].t : '',
+    questions_ratees: [],
+    mauvaises_reponses: [],
+    bonnes_reponses: []
   };
+
+  // Ajouter les questions ratées
+  missedQ.forEach(m => {
+    summary.questions_ratees.push('Q'+m.num+'. '+m.q);
+    summary.mauvaises_reponses.push(m.wrong);
+    summary.bonnes_reponses.push(m.correct);
+  });
 
   try {
     await fetch(SHEETS_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(summary)
     });
     return 'ok';
   } catch(e) {
@@ -402,7 +416,6 @@ async function sendToSheets(pct, gc) {
     return 'error';
   }
 }
-
 async function showResults(){
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   const elapsed=Date.now()-startTime;
